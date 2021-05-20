@@ -1,7 +1,7 @@
 import {defs, tiny} from './examples/common.js';
 
 const {
-    Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene,
+    Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene,Texture
 } = tiny;
 
 let k = 1;
@@ -17,6 +17,8 @@ let d = 1/100;
 const DAMPING=0.01;
 const TIME_STEPSIZE2 = 0.5*0.5;
 const CONSTRAINT_ITERATIONS=15;
+
+
 class particle
 {
     constructor(pos)
@@ -266,8 +268,9 @@ class cloth extends Shape {
 }
 
 
-class Cube extends Shape {
 
+
+class Cube extends Shape {
     constructor() {
         super("position", "normal",);
         // Loop 3 times (for each axis), and inside loop twice (for opposing cube sides):
@@ -285,6 +288,49 @@ class Cube extends Shape {
     }
 }
 
+class Text_Line extends Shape {                           // **Text_Line** embeds text in the 3D world, using a crude texture
+                                                                 // method.  This Shape is made of a horizontal arrangement of quads.
+                                                                 // Each is textured over with images of ASCII characters, spelling
+                                                                 // out a string.  Usage:  Instantiate the Shape with the desired
+                                                                 // character line width.  Then assign it a single-line string by calling
+                                                                 // set_string("your string") on it. Draw the shape on a material
+                                                                 // with full ambient weight, and text.png assigned as its texture
+                                                                 // file.  For multi-line strings, repeat this process and draw with
+                                                                 // a different matrix.
+    constructor(max_size) {
+        super("position", "normal", "texture_coord");
+        this.max_size = max_size;
+        var object_transform = Mat4.identity();
+        for (var i = 0; i < max_size; i++) {                                       // Each quad is a separate Square instance:
+            defs.Square.insert_transformed_copy_into(this, [], object_transform);
+            object_transform.post_multiply(Mat4.translation(1.5, 0, 0));
+        }
+    }
+
+    set_string(line, context) {           // set_string():  Call this to overwrite the texture coordinates buffer with new
+        // values per quad, which enclose each of the string's characters.
+        this.arrays.texture_coord = [];
+        for (var i = 0; i < this.max_size; i++) {
+            var row = Math.floor((i < line.length ? line.charCodeAt(i) : ' '.charCodeAt()) / 16),
+                col = Math.floor((i < line.length ? line.charCodeAt(i) : ' '.charCodeAt()) % 16);
+
+            var skip = 3, size = 32, sizefloor = size - skip;
+            var dim = size * 16,
+                left = (col * size + skip) / dim, top = (row * size + skip) / dim,
+                right = (col * size + sizefloor) / dim, bottom = (row * size + sizefloor + 5) / dim;
+
+            this.arrays.texture_coord.push(...Vector.cast([left, 1 - bottom], [right, 1 - bottom],
+                [left, 1 - top], [right, 1 - top]));
+        }
+        if (!this.existing) {
+            this.copy_onto_graphics_card(context);
+            this.existing = true;
+        } else
+            this.copy_onto_graphics_card(context, ["texture_coord"], false);
+    }
+}
+
+
 export class Spring_Scene extends Scene {
     constructor() {
         // constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
@@ -301,12 +347,26 @@ export class Spring_Scene extends Scene {
             torus2: new defs.Torus(35, 325),
 
             spring: (x) => new defs.Spring(15, 500, x),
+
             cloth: new cloth(14,10,55,45),
             //spring:  new defs.Spring(15, 500, 1/100),
-            cube:new Cube()
 
+
+
+            //spring:  new defs.Spring(15, 500, 1/100),
+            cube :new Cube(),
+            cylinder: new defs.Capped_Cylinder (30,30),
+            square: new defs.Square(),
+            arrow: new defs.Arrow(),
+            text: new Text_Line(35),
 
         };
+
+        const texture = new defs.Textured_Phong(1);
+        this.text_image = new Material(texture, {
+            ambient: 1, diffusivity: 0, specularity: 0,
+            texture: new Texture("assets/text.png")
+        });
 
         // *** Materials
         this.materials = {
@@ -317,11 +377,30 @@ export class Spring_Scene extends Scene {
             gouraud: new Material(new Gouraud_Shader(),
                 {ambient: .4, diffusivity: .6, specularity: .8, smoothness: 40, color: hex_color("#fff53e")}),
             ring: new Material(new Ring_Shader()),
+
             phong2: new Material(new defs.Phong_Shader(),
                 {ambient: .4, diffusivity: .6, specularity: 0, smoothness: 40, color: hex_color("#e18dfc")}),
+
+            leg: new Material (new defs.Phong_Shader(),
+            {ambient: .4, diffusivity: .6, specularity: .1, color: hex_color ("#c4cace")}),
+            paper: new Material (new defs.Phong_Shader(),
+            {ambient: .6, diffusivity: .6, specularity: .1, color: hex_color ("#ffffff")}),
+            second: new Material (new defs.Phong_Shader(),
+            {ambient: .6, diffusivity: .6, specularity: .1, color: hex_color ("#d1642e")}),
+            minute: new Material (new defs.Phong_Shader(),
+            {ambient: .6, diffusivity: .6, specularity: .1, color: hex_color ("#000000")}),
+            hour: new Material (new defs.Phong_Shader(),
+            {ambient: .6, diffusivity: .6, specularity: .1, color: hex_color ("#326ba8")}),
+            clock: new Material (new defs.Phong_Shader(),
+            {ambient:.5,diffusivity:.6, specularity: .1, color: hex_color ("#C0C0C0")}),
+            weight1: new Material (new defs.Phong_Shader(),
+            {ambient:.3,diffusivity:.6,specularity:.1,color: hex_color ("#6e9fd4")}),
+
+
+
         }
 
-        this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
+        this.initial_camera_location = Mat4.look_at(vec3(0, 2, 22), vec3(0, -0.2, 0), vec3(0, 4, 0));
         this.attached = () => this.initial_camera_location;
 
 
@@ -341,6 +420,152 @@ export class Spring_Scene extends Scene {
             this.key_triggered_button("Attach to moon", ["Control", "m"], () => this.attached = () => this.moon);
         }*/
 
+    draw_desk (context,program_state) {
+        let plat_transform = Mat4.identity();
+        plat_transform = plat_transform.pre_multiply(Mat4.scale(8,0.2,4));
+        plat_transform = plat_transform.pre_multiply (Mat4.translation(0,-5,0));
+        let leg_1 = Mat4.identity();
+        leg_1 = leg_1.pre_multiply(Mat4.rotation(Math.PI/2,1,0,0));
+        leg_1 = leg_1.pre_multiply (Mat4.scale(0.2,5,0.2));
+        leg_1 = leg_1.pre_multiply (Mat4.translation(-7.8,-7.5,-3.8));
+
+        let leg_2 = Mat4.identity();
+        leg_2 = leg_2.pre_multiply(Mat4.rotation(Math.PI/2,1,0,0));
+        leg_2 = leg_2.pre_multiply (Mat4.scale(0.2,5,0.2));
+        leg_2 = leg_2.pre_multiply (Mat4.translation(-7.8,-7.5,3.8));
+
+        let leg_3 = Mat4.identity();
+        leg_3 = leg_3.pre_multiply(Mat4.rotation(Math.PI/2,1,0,0));
+        leg_3 = leg_3.pre_multiply (Mat4.scale(0.2,5,0.2));
+        leg_3 = leg_3.pre_multiply (Mat4.translation(7.8,-7.5,-3.8));
+
+        let leg_4 = Mat4.identity();
+        leg_4 = leg_4.pre_multiply(Mat4.rotation(Math.PI/2,1,0,0));
+        leg_4 = leg_4.pre_multiply (Mat4.scale(0.2,5,0.2));
+        leg_4 = leg_4.pre_multiply (Mat4.translation(7.8,-7.5,3.8));
+
+
+        this.shapes.cube.draw(context,program_state,plat_transform,this.materials.phong);
+        this.shapes.cylinder.draw(context,program_state,leg_1,this.materials.leg);
+        this.shapes.cylinder.draw(context,program_state,leg_2,this.materials.leg);
+        this.shapes.cylinder.draw(context,program_state,leg_3,this.materials.leg);
+        this.shapes.cylinder.draw(context,program_state,leg_4,this.materials.leg);
+
+        let paper_t = Mat4.identity();
+        paper_t = paper_t.pre_multiply (Mat4.rotation(Math.PI/2,1,0,0));
+        paper_t = paper_t.pre_multiply (Mat4.scale(0.8,1,1));
+        paper_t = paper_t.pre_multiply (Mat4.rotation (Math.PI/10,0,1,0));
+        paper_t = paper_t.pre_multiply (Mat4.translation(-7.2,-4.79,-2));
+        this.shapes.square.draw(context,program_state,paper_t,this.materials.paper);
+
+        let paper_2 = Mat4.identity();
+        paper_2 = paper_2.pre_multiply (Mat4.rotation(Math.PI/2,1,0,0));
+        paper_2 = paper_2.pre_multiply (Mat4.scale(0.8,1,1));
+        paper_2 = paper_2.pre_multiply (Mat4.rotation (-Math.PI/15,0,1,0));
+        paper_2 = paper_2.pre_multiply (Mat4.translation(-7.0,-4.79,-2));
+        this.shapes.square.draw(context,program_state,paper_2,this.materials.paper);
+
+        let paper_3 = Mat4.identity();
+        paper_3 = paper_3.pre_multiply (Mat4.rotation(Math.PI/2,1,0,0));
+        paper_3 = paper_3.pre_multiply (Mat4.scale(0.8,1,1));
+        paper_3 = paper_3.pre_multiply (Mat4.rotation (-Math.PI/20,0,1,0));
+        paper_3 = paper_3.pre_multiply (Mat4.translation(1,-4.79,2));
+        this.shapes.square.draw(context,program_state,paper_3,this.materials.paper);
+    }
+
+    draw_clock (context,program_state) {
+        const t = program_state.animation_time/1000;
+        const angle_sec = Math.PI/10*t;
+        const angle_min = Math.PI/200*t;
+        const angle_hr = Math.PI/2400*t;
+
+        let second_transform = Mat4.identity();
+        second_transform = second_transform.pre_multiply(Mat4.rotation(Math.PI/2,0,1,0));
+        second_transform = second_transform.pre_multiply(Mat4.rotation(Math.PI/2,0,0,1));
+        second_transform = second_transform.pre_multiply(Mat4.scale(0.6,0.7,0.6));
+        second_transform = second_transform.pre_multiply(Mat4.rotation(-angle_sec,0,0,1));
+        second_transform = second_transform.pre_multiply(Mat4.translation(-5,6,-3.8));
+
+        let min_transform = Mat4.identity();
+        min_transform = min_transform.pre_multiply(Mat4.rotation(Math.PI/2,0,1,0));
+        min_transform = min_transform.pre_multiply(Mat4.rotation(Math.PI/2,0,0,1));
+        min_transform = min_transform.pre_multiply(Mat4.scale(0.8,0.55,0.8));
+        min_transform = min_transform.pre_multiply(Mat4.rotation(-angle_min,0,0,1));
+        min_transform = min_transform.pre_multiply(Mat4.translation(-5,6,-3.8));
+
+        let h_transform = Mat4.identity();
+        h_transform = h_transform.pre_multiply(Mat4.rotation(Math.PI/2,0,1,0));
+        h_transform = h_transform.pre_multiply(Mat4.rotation(Math.PI/2,0,0,1));
+        h_transform = h_transform.pre_multiply(Mat4.scale(1,0.35,1));
+        h_transform = h_transform.pre_multiply(Mat4.rotation(-angle_hr,0,0,1));
+        h_transform = h_transform.pre_multiply(Mat4.translation(-5,6,-3.8));
+
+        let clock_transform = Mat4.identity();
+        clock_transform = clock_transform.pre_multiply(Mat4.scale(1.8,1.8,0.3));
+        clock_transform = clock_transform.pre_multiply(Mat4.translation(-5,6,-4.1));
+
+
+        this.shapes.cylinder.draw(context,program_state,clock_transform,this.materials.clock);
+        this.shapes.arrow.draw(context,program_state,second_transform,this.materials.second);
+        this.shapes.arrow.draw(context,program_state,min_transform,this.materials.minute);
+        this.shapes.arrow.draw(context,program_state,h_transform,this.materials.hour);
+
+    }
+
+    draw_platform(context,program_state) {
+        let base_transform = Mat4.identity();
+        base_transform = base_transform.pre_multiply(Mat4.scale(1,0.2,0.5)).pre_multiply(Mat4.translation(5,-4.85,1));
+        let mid_transform = Mat4.identity();
+        mid_transform = mid_transform.pre_multiply(Mat4.rotation(Math.PI/2,1,0,0)).pre_multiply(Mat4.scale(0.1,10,0.1));
+        mid_transform = mid_transform.pre_multiply(Mat4.translation(4.7,0.2,1));
+        let stretch = Mat4.identity();
+        stretch = stretch.pre_multiply(Mat4.rotation(Math.PI/2,0,1,0)).pre_multiply(Mat4.scale(3,0.1,0.1));
+        stretch = stretch.pre_multiply(Mat4.translation(3.4,5,1));
+        this.shapes.cube.draw(context,program_state,base_transform,this.materials.second);
+        this.shapes.cylinder.draw(context,program_state,mid_transform,this.materials.hour);
+        this.shapes.cylinder.draw(context,program_state,stretch,this.materials.hour);
+
+
+
+    }
+
+    draw_weight_1 (context,program_state) {
+        let model_transform = Mat4.identity();
+        model_transform = model_transform.pre_multiply(Mat4.scale(0.5,0.5,0.5)).pre_multiply(Mat4.translation(-2,-4.3,-1));
+        this.shapes.cube.draw(context,program_state,model_transform,this.materials.weight1);
+        let strings = ["2kg",Text_Line.toString(), Text_Line.toString()];
+        let cube_side = Mat4.translation(-0.3,0,1.1);
+        this.shapes.text.set_string("2kg", context.context);
+        this.shapes.text.draw(context, program_state, model_transform.times(cube_side).times(Mat4.scale(.2, .2, .2)), this.text_image);
+    }
+
+    draw_weight_2 (context,program_state) {
+        let model_transform = Mat4.identity();
+        model_transform = model_transform.pre_multiply(Mat4.scale(0.7,0.7,0.7)).pre_multiply(Mat4.translation(-4,-4.1,-0.6));
+        this.shapes.cube.draw(context,program_state,model_transform,this.materials.weight1);
+        //let strings = ["1.5kg",Text_Line.toString(), Text_Line.toString()];
+        let cube_side = Mat4.translation(-0.5,0,1.1);
+        this.shapes.text.set_string("2.5kg", context.context);
+        this.shapes.text.draw(context, program_state, model_transform.times(cube_side).times(Mat4.scale(.2, .2, .2)), this.text_image);
+    }
+
+    draw_weight_3 (context,program_state) {
+        let model_transform = Mat4.identity();
+        model_transform = model_transform.pre_multiply(Mat4.scale(0.4,0.4,0.4)).pre_multiply(Mat4.translation(-5.6,-4.4,0.8));
+        this.shapes.cube.draw(context,program_state,model_transform,this.materials.weight1);
+        //let strings = ["1.5kg",Text_Line.toString(), Text_Line.toString()];
+        let cube_side = Mat4.translation(-0.28,0,1.1);
+        this.shapes.text.set_string("1kg", context.context);
+        this.shapes.text.draw(context, program_state, model_transform.times(cube_side).times(Mat4.scale(.3, .3, .3)), this.text_image);
+    }
+
+    draw_wall (context,program_state) {
+        let back = Mat4.identity();
+        back = back.pre_multiply (Mat4.scale(15,15,20)).pre_multiply(Mat4.translation(0,6,-4));
+        this.shapes.square.draw(context,program_state,back,this.materials.paper);
+    }
+
+
     display(context, program_state) {
         // display():  Called once per frame of animation.
         // Setup -- This part sets up the scene's overall camera matrix, projection matrix, and lights:
@@ -349,10 +574,10 @@ export class Spring_Scene extends Scene {
             // Define the global camera and projection matrices, which are stored in program_state.
             program_state.set_camera(this.initial_camera_location);
         }
-        program_state.set_camera(this.attached());
+        program_state.set_camera(this.initial_camera_location);
 
         program_state.projection_transform = Mat4.perspective(
-            Math.PI / 4, context.width / context.height, .1, 1000);
+            Math.PI/4, context.width / context.height, .1, 1000);
 
         // TODO: Lighting (Requirement 2)
         const light_position = vec4(0, 5, 5, 1);
@@ -373,6 +598,14 @@ export class Spring_Scene extends Scene {
         positionY = positionY + velocityY * 4*dt;
         //console.log(positionY);
         d = (positionY-anchorY)/ 500;
+
+        this.draw_desk(context,program_state);
+        this.draw_clock(context,program_state);
+        this.draw_platform(context,program_state);
+        this.draw_weight_1(context,program_state);
+        this.draw_weight_2(context,program_state);
+        this.draw_weight_3(context,program_state);
+        this.draw_wall(context,program_state);
 
 
         //this.shapes.spring(d).draw(context, program_state, model_transform, this.materials.phong);
