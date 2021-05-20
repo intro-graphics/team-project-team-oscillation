@@ -7,7 +7,8 @@ import {Scene_To_Texture_Demo} from "./examples/scene-to-texture-demo.js"
 import {Surfaces_Demo} from "./examples/surfaces-demo.js"
 import {Text_Demo} from "./examples/text-demo.js"
 import {Transforms_Sandbox} from "./examples/transforms-sandbox.js"
-import {Spring_Scene} from "./spring.js";
+import {Spring_Scene} from "./spring.js"
+import {Assignment4} from "./assignment4.js"
 
 // Pull these names into this module's scope for convenience:
 const {
@@ -41,7 +42,9 @@ Object.assign(defs,
 
 // (Can define Main_Scene's class here)
 
+
 const Main_Scene = Spring_Scene;
+
 const Additional_Scenes = [];
 
 export {Main_Scene, Additional_Scenes, Canvas_Widget, Code_Widget, Text_Widget, defs}

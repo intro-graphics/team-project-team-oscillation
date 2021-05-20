@@ -33,7 +33,6 @@ export class Spring_Scene extends Scene {
             spring: (x) => new defs.Spring(15, 500, x)
             //spring:  new defs.Spring(15, 500, 1/100),
 
-
         };
 
         // *** Materials
