@@ -3,6 +3,7 @@ import {defs, tiny} from './common.js';
 const {Vector3, vec3, vec4, color, Mat4, Light, Shape, Material, Shader, Texture, Scene} = tiny;
 const {Triangle, Square, Tetrahedron, Windmill, Cube, Subdivision_Sphere} = defs;
 
+
 export class Surfaces_Demo extends Scene {
     constructor(scene_id, material) {
         super();
@@ -141,7 +142,8 @@ export class Surfaces_Demo extends Scene {
     }
 
     display_scene_1(context, program_state) {
-        const random = (x) => Math.sin(1000 * x + program_state.animation_time / 1000);
+
+        const random = (x,y) => Math.sin(1000 * x + program_state.animation_time / 1000);
 
         // Update the JavaScript-side shape with new vertices:
         this.shapes.sheet.arrays.position.forEach((p, i, a) =>

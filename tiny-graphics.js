@@ -747,16 +747,16 @@ const Graphics_Card_Object = tiny.Graphics_Card_Object =
             // an existing GPU context and merely overwriting parts of itself.
             if (!existing_instance) {
                 Graphics_Card_Object.idiot_alarm |= 0;     // Start a program-wide counter.
-                if (Graphics_Card_Object.idiot_alarm++ > 200)
+                /*if (Graphics_Card_Object.idiot_alarm++ > 200)
                     throw `Error: You are sending a lot of object definitions to the GPU, probably by mistake!  
                     Many of them are likely duplicates, which you don't want since sending each one is very slow.  
-                    To avoid this, from your display() function avoid ever declaring a Shape Shader or Texture (or 
+               0     To avoid this, from your display() function avoid ever declaring a Shape Shader or Texture (or 
                     subclass of these) with "new", thus causing the definition to be re-created and re-transmitted every
                     frame. Instead, call these in your scene's constructor and keep the result as a class member, 
                     or otherwise make sure it only happens once.  In the off chance that you have a somehow deformable 
                     shape that MUST change every frame, then at least use the special arguments of 
                     copy_onto_graphics_card to limit which buffers get overwritten every frame to only 
-                    the necessary ones.`;
+                    the necessary ones.`;*/
             }
             // Check if this object already exists on that GPU context.
             return existing_instance ||             // If necessary, start a new object associated with the context.
@@ -814,6 +814,7 @@ const Vertex_Buffer = tiny.Vertex_Buffer =
                     gpu_instance.webGL_buffer_pointers[name] = gl.createBuffer();
                 gl.bindBuffer(gl.ARRAY_BUFFER, gpu_instance.webGL_buffer_pointers[name]);
                 write(gl.ARRAY_BUFFER, Matrix.flatten_2D_to_1D(this.arrays[name]));
+                //console.log("kkk");
             }
             if (this.indices.length && write_to_indices) {
                 if (!did_exist)

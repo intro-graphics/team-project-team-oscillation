@@ -312,12 +312,42 @@ const Surface_Of_Revolution = defs.Surface_Of_Revolution =
         // now let each such point be a row.  Sweep that whole curve around the Z axis in equal
         // steps, stopping and storing new points along the way; let each step be a column. Now
         // we have a flexible "generalized cylinder" spanning an area until total_curvature_angle.
-        constructor(rows, columns, points, texture_coord_range, total_curvature_angle = 2 * Math.PI) {
+
+
+        constructor(rows, columns, points, texture_coord_range, total_curvature_angle =  2 * Math.PI) {
+
             const row_operation = i => Grid_Patch.sample_array(points, i),
                 column_operation = (j, p) => Mat4.rotation(total_curvature_angle / columns, 0, 0, 1).times(p.to4(1)).to3();
 
             super(rows, columns, row_operation, column_operation, texture_coord_range);
         }
+    }
+
+const Helix = defs.Helix =
+    class Helix extends Grid_Patch {
+
+        constructor(rows, columns, points, d, texture_coord_range, total_curvature_angle =  22 * Math.PI) {
+
+            let dis = 0;
+            let a = total_curvature_angle / columns;
+            let rotation = Matrix.of(
+                [Math.cos(a),0,Math.sin(a),0],
+                [0,1,0,-d],
+                [-Math.sin(a),0,Math.cos(a),0],
+                [0,0,0,1]
+            );
+            /*let rotation = Matrix.of(
+                [Math.cos(a),0,Math.sin(a),0],
+                [0,1,0,-dis],
+                [-Math.sin(a),0,Math.cos(a),0],
+                [0,0,0,1]
+            );*/
+
+            const row_operation = i => Grid_Patch.sample_array(points, i),
+                column_operation = (j, p) => rotation.times(p.to4(1)).to3();
+            super(rows, columns, row_operation, column_operation, texture_coord_range);
+        }
+
     }
 
 
@@ -360,6 +390,59 @@ const Torus = defs.Torus =
             Surface_Of_Revolution.insert_transformed_copy_into(this, [rows, columns, circle_points, texture_range]);
         }
     }
+
+const Spring = defs.Spring =
+    class Spring extends Shape {
+        // Build a donut shape.  An example of a surface of revolution.
+        constructor(rows, columns, d,texture_range) {
+            super("position", "normal", "texture_coord");
+            this.d=d;
+            const circle_points = Array(rows).fill(vec3(0, 1 / 10, 0))
+                .map((p, i, a) => Mat4.translation(-2 / 3, 0, 0)
+                    .times(Mat4.rotation(i / (a.length - 1) * 2 * Math.PI, 0, 0, 1))
+                    .times(Mat4.scale(1, 1, 3))
+                    .times(p.to4(1)).to3());
+            Helix.insert_transformed_copy_into(this, [rows, columns, circle_points, this.d,texture_range]);
+            this.p = circle_points;
+            this.r = rows;
+            this.c = columns;
+
+        }
+        /*func(d)
+        {
+            let a = 22*Math.PI / this.c;
+            let rotation = Matrix.of(
+                [Math.cos(a),0,Math.sin(a),0],
+                [0,1,0,-d],
+                [-Math.sin(a),0,Math.cos(a),0],
+                [0,0,0,1]
+            );
+
+            const row_operation = i => Grid_Patch.sample_array(this.p, i),
+                column_operation = (j, p) => rotation.times(p.to4(1)).to3();
+
+            let points = [];
+            for (let r = 0; r <= this.r; r++) {
+                points.push(new Array(this.c + 1));
+                // Allocate a 2D array.
+                // Use next_row_function to generate the start point of each row. Pass in the progress ratio,
+                // and the previous point if it existed.
+                points[r][0] = row_operation(r / this.r, points[r - 1] && points[r - 1][0]);
+            }
+            for (let r = 0; r <= this.r; r++) {
+                // From those, use next_column function to generate the remaining points:
+                for (let c = 0; c <=this.c; c++) {
+                    if (c > 0) points[r][c] = column_operation(c / this.c, points[r][c - 1], r / this.r);
+
+                }
+            }
+            return points;
+
+        }*/
+    }
+
+
+
 
 const Grid_Sphere = defs.Grid_Sphere =
     class Grid_Sphere extends Shape {
