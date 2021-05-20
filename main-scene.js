@@ -35,7 +35,8 @@ Object.assign(defs,
             {Surfaces_Demo},
             {Text_Demo},
             {Transforms_Sandbox},
-    {Spring_Scene}
+    {Spring_Scene},
+    {Assignment4}
             );
 
 // ******************** End extra step

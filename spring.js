@@ -14,6 +14,276 @@ let springForceY = 0;
 let forceY = 0;
 let accelerationY = 0;
 let d = 1/100;
+const DAMPING=0.01;
+const TIME_STEPSIZE2 = 0.5*0.5;
+const CONSTRAINT_ITERATIONS=15;
+class particle
+{
+    constructor(pos)
+    {
+        this.pos = pos;
+        this.old_pos = pos;
+        this.acceleration=vec3(0,0,0);
+        this.mass=1;
+        this.movable=true;
+        this.accumulated_normal=vec3(0,0,0);
+        //console.log(typeof (this.pos));
+    }
+
+    addForce(f)
+    {
+        this.acceleration = this.acceleration.plus(f.times(1/this.mass));
+    }
+   timeStep()
+  {
+    if(this.movable)
+    {
+        let temp = this.pos;
+        this.pos = this.pos.plus((this.pos.minus(this.old_pos)).times((1.0-DAMPING))).plus(this.acceleration.times(TIME_STEPSIZE2));
+        this.old_pos = temp;
+        this.acceleration = vec3(0,0,0); // acceleration is reset since it HAS been translated into a change in position (and implicitely into velocity)
+    }
+  }
+    getPos() {return this.pos;}
+    resetAcceleration() {this.acceleration = vec3(0,0,0);}
+    offsetPos(v) { if(this.movable) this.pos = this.pos.plus(v);}
+    makeUnmovable() {this.movable = false;}
+    addToNormal(normal)
+    {
+      this.accumulated_normal = this.accumulated_normal.plus(normal.normalized());
+    }
+    getNormal() { return this.accumulated_normal;}
+    resetNormal() {this.accumulated_normal = vec3(0,0,0);}
+}
+
+class constraint
+{
+    constructor(p1,p2) {
+        this.p1 = p1
+        this.p2 = p2
+        let vec = p1.getPos().minus(p2.getPos());
+        this.rest_distance = vec.norm();
+    }
+    satisfyConstraint()
+    {
+        let p1_to_p2 = this.p2.getPos().minus(this.p1.getPos()); // vector from p1 to p2
+        let current_distance = p1_to_p2.norm(); // current distance between p1 and p2
+        let correctionVector = p1_to_p2.times((1 - this.rest_distance/current_distance)); // The offset vector that could moves p1 into a distance of rest_distance to p2
+        let correctionVectorHalf = correctionVector.times(0.5); // Lets make it half that length, so that we can move BOTH p1 and p2.
+        this.p1.offsetPos(correctionVectorHalf); // correctionVectorHalf is pointing from p1 to p2, so the length should move p1 half the length needed to satisfy the constraint.
+        this.p2.offsetPos(correctionVectorHalf.times(-1));
+    }
+
+}
+
+
+class cloth extends Shape {
+
+    constructor(width,height,num_particles_width,num_particles_height) {
+        super("position", "normal",);
+        this.num_particles_width = num_particles_width;
+        this.num_particles_height = num_particles_height;
+        this.particles = [];
+        this.constraints = [];
+
+
+        for (let x = 0; x < this.num_particles_width; x++) {
+            for (let y = 0; y < this.num_particles_height; y++) {
+                let pos = vec3(width * (x / num_particles_width),
+                    -height * (y / num_particles_height),
+                    0);
+                //console.log(pos);
+                //this.particles[y*num_particles_width+x]= new particle(pos); // insert particle in column x at y'th row
+                this.particles[y*num_particles_width+x] = new particle(pos);
+                //console.log(new particle(pos));
+                this.arrays.position[y*num_particles_width+x] = pos;
+                //this.pr.push(pos);
+            }
+        }
+
+        //console.log(this.arrays.position);
+
+        // Connecting immediate neighbor particles with constraints (distance 1 and sqrt(2) in the grid)
+        for (let x = 0; x < num_particles_width; x++) {
+            for (let y = 0; y < num_particles_height; y++) {
+                if (x < num_particles_width - 1) this.makeConstraint(this.getParticle(x, y), this.getParticle(x + 1, y));
+                if (y < num_particles_height - 1) this.makeConstraint(this.getParticle(x, y), this.getParticle(x, y + 1));
+                if (x < num_particles_width - 1 && y < num_particles_height - 1) this.makeConstraint(this.getParticle(x, y), this.getParticle(x + 1, y + 1));
+                if (x < num_particles_width - 1 && y < num_particles_height - 1) this.makeConstraint(this.getParticle(x + 1, y), this.getParticle(x, y + 1));
+            }
+        }
+
+
+        // Connecting secondary neighbors with constraints (distance 2 and sqrt(4) in the grid)
+        for (let x = 0; x < num_particles_width; x++) {
+            for (let y = 0; y < num_particles_height; y++) {
+                if (x < num_particles_width - 2) this.makeConstraint(this.getParticle(x, y), this.getParticle(x + 2, y));
+                if (y < num_particles_height - 2) this.makeConstraint(this.getParticle(x, y), this.getParticle(x, y + 2));
+                if (x < num_particles_width - 2 && y < num_particles_height - 2) this.makeConstraint(this.getParticle(x, y), this.getParticle(x + 2, y + 2));
+                if (x < num_particles_width - 2 && y < num_particles_height - 2) this.makeConstraint(this.getParticle(x + 2, y), this.getParticle(x, y + 2));
+            }
+        }
+
+        // making the upper left most three and right most three particles unmovable
+        for (let i = 0; i < 3; i++) {
+            this.getParticle(0 + i, 0).offsetPos(vec3(0.5, 0.0, 0.0)); // moving the particle a bit towards the center, to make it hang more natural - because I like it ;)
+            this.getParticle(0 + i, 0).makeUnmovable();
+
+            this.getParticle(num_particles_width - 1 - i, 0).offsetPos(vec3(0.5, 0.0, 0.0)); // moving the particle a bit towards the center, to make it hang more natural - because I like it ;)
+            this.getParticle(num_particles_width- 1 - i, 0).makeUnmovable();
+        }
+        for (let particle of this.particles) {
+            particle.resetNormal();
+        }
+        for (let x = 0; x < num_particles_width - 1; x++) {
+            for (let y = 0; y < num_particles_height - 1; y++) {
+                //let d = this.getParticle(x + 1, y);
+                //console.log(d);
+                // d= this.getParticle(x,y);
+                //d = this.getParticle(x+1,y+1);
+
+                let normal = this.calcTriangleNormal(this.getParticle(x + 1, y), this.getParticle(x, y), this.getParticle(x, y + 1));
+                this.getParticle(x + 1, y).addToNormal(normal);
+                this.getParticle(x, y).addToNormal(normal);
+                this.getParticle(x, y + 1).addToNormal(normal);
+
+                normal = this.calcTriangleNormal(this.getParticle(x + 1, y + 1), this.getParticle(x + 1, y), this.getParticle(x, y + 1));
+                this.getParticle(x + 1, y + 1).addToNormal(normal);
+                this.getParticle(x + 1, y).addToNormal(normal);
+                this.getParticle(x, y + 1).addToNormal(normal);
+            }
+        }
+
+
+        for (let x = 0; x < this.num_particles_width; x++) {
+            for (let y = 0; y < this.num_particles_height; y++) {
+                //this.arrays.normal.push(this.getParticle(x, y).getNormal());
+                this.arrays.normal[y*num_particles_width+x]= this.getParticle(x, y).getNormal();
+                //this.nr.push(this.getParticle(x, y).getNormal());
+            }
+        }
+        //console.log(this.arrays.normal.length);
+
+
+        for (let h = 0; h < 44; h++) {
+            // Generate a sequence like this (if #columns is 10):
+            for (let i = 0; i < 2 * 54; i++)    // "1 11 0  11 1 12  2 12 1  12 2 13  3 13 2  13 3 14  4 14 3..."
+            {
+                for (let j = 0; j < 3; j++) {
+                    this.indices.push(h * (54 + 1) + 54 * ((i + (j % 2)) % 2) + (~~((j % 3) / 2) ?
+                        (~~(i / 2) + 2 * (i % 2)) : (~~(i / 2) + 1)));
+
+                }5
+            }
+
+            console.log(this.indices);
+
+        }
+    }
+
+
+    getParticle(x, y) {return this.particles[y*this.num_particles_width + x];}
+    makeConstraint(p1, p2) {this.constraints.push(new constraint(p1,p2));}
+    calcTriangleNormal(p1, p2, p3)
+   {
+    let pos1 = p1.getPos();
+    let pos2 = p2.getPos();
+    let pos3 = p3.getPos();
+       //console.log(pos1);
+    let v1 = pos2.minus(pos1);
+    let v2 = pos3.minus(pos1);
+
+    return v1.cross(v2);
+   }
+    addWindForcesForTriangle(p1,p2,p3, direction)
+{
+    let normal = this.calcTriangleNormal(p1,p2,p3);
+    let d = normal.normalized();
+    let force = normal*(d.dot(direction));
+    p1.addForce(force);
+    p2.addForce(force);
+    p3.addForce(force);
+}
+    timestep()
+    {
+        for(let i=0; i<CONSTRAINT_ITERATIONS; i++) // iterate over all constraints several times
+        {
+            for( let x of this.constraints )
+            {
+                x.satisfyConstraint(); // satisfy constraint.
+            }
+        }
+
+        for(let p of this.particles)
+        {
+            p.timeStep(); // calculate the position of each particle at the next time step.
+        }
+    }
+    addforce(direction)
+    {
+        for(let p of this.particles)
+        {
+            p.addForce(direction); // calculate the position of each particle at the next time step.
+        }
+    }
+
+    ddraw()
+    {
+        this.arrays.position=[];
+        this.arrays.normal=[];
+        for(let p of this.particles)
+        {
+            this.arrays.position.push(p.getPos());
+        }
+
+        for (let particle of this.particles) {
+            particle.resetNormal();
+        }
+        for (let x = 0; x < this.num_particles_width - 1; x++) {
+            for (let y = 0; y < this.num_particles_height - 1; y++) {
+
+                let normal = this.calcTriangleNormal(this.getParticle(x + 1, y), this.getParticle(x, y), this.getParticle(x, y + 1));
+                this.getParticle(x + 1, y).addToNormal(normal);
+                this.getParticle(x, y).addToNormal(normal);
+                this.getParticle(x, y + 1).addToNormal(normal);
+
+                normal = this.calcTriangleNormal(this.getParticle(x + 1, y + 1), this.getParticle(x + 1, y), this.getParticle(x, y + 1));
+                this.getParticle(x + 1, y + 1).addToNormal(normal);
+                this.getParticle(x + 1, y).addToNormal(normal);
+                this.getParticle(x, y + 1).addToNormal(normal);
+            }
+        }
+
+        for (let x = 0; x < this.num_particles_width; x++) {
+            for (let y = 0; y < this.num_particles_height; y++) {
+                //this.arrays.normal.push(this.getParticle(x, y).getNormal());
+                this.arrays.normal[y*this.num_particles_width+x]= this.getParticle(x, y).getNormal();
+            }
+        }
+    }
+
+
+}
+
+
+class Cube extends Shape {
+
+    constructor() {
+        super("position", "normal",);
+        // Loop 3 times (for each axis), and inside loop twice (for opposing cube sides):
+        this.arrays.position = Vector3.cast(
+            [-1, -1, -1], [1, -1, -1], [-1, -1, 1], [1, -1, 1], [1, 1, -1], [-1, 1, -1], [1, 1, 1], [-1, 1, 1],
+            [-1, -1, -1], [-1, -1, 1], [-1, 1, -1], [-1, 1, 1], [1, -1, 1], [1, -1, -1], [1, 1, 1], [1, 1, -1],
+            [-1, -1, 1], [1, -1, 1], [-1, 1, 1], [1, 1, 1], [1, -1, -1], [-1, -1, -1], [1, 1, -1], [-1, 1, -1]);
+        this.arrays.normal = Vector3.cast(
+            [0, -1, 0], [0, -1, 0], [0, -1, 0], [0, -1, 0], [0, 1, 0], [0, 1, 0], [0, 1, 0], [0, 1, 0],
+            [-1, 0, 0], [-1, 0, 0], [-1, 0, 0], [-1, 0, 0], [1, 0, 0], [1, 0, 0], [1, 0, 0], [1, 0, 0],
+            [0, 0, 1], [0, 0, 1], [0, 0, 1], [0, 0, 1], [0, 0, -1], [0, 0, -1], [0, 0, -1], [0, 0, -1]);
+        // Arrange the vertices into a square shape in texture space too:
+        this.indices.push(0, 1, 2, 1, 3, 2, 4, 5, 6, 5, 7, 6, 8, 9, 10, 9, 11, 10, 12, 13,
+            14, 13, 15, 14, 16, 17, 18, 17, 19, 18, 20, 21, 22, 21, 23, 22);
+    }
+}
 
 export class Spring_Scene extends Scene {
     constructor() {
@@ -30,8 +300,11 @@ export class Spring_Scene extends Scene {
             torus: new defs.Torus(15, 15),
             torus2: new defs.Torus(35, 325),
 
-            spring: (x) => new defs.Spring(15, 500, x)
+            spring: (x) => new defs.Spring(15, 500, x),
+            cloth: new cloth(14,10,55,45),
             //spring:  new defs.Spring(15, 500, 1/100),
+            cube:new Cube()
+
 
         };
 
@@ -44,6 +317,8 @@ export class Spring_Scene extends Scene {
             gouraud: new Material(new Gouraud_Shader(),
                 {ambient: .4, diffusivity: .6, specularity: .8, smoothness: 40, color: hex_color("#fff53e")}),
             ring: new Material(new Ring_Shader()),
+            phong2: new Material(new defs.Phong_Shader(),
+                {ambient: .4, diffusivity: .6, specularity: 0, smoothness: 40, color: hex_color("#e18dfc")}),
         }
 
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
@@ -86,7 +361,7 @@ export class Spring_Scene extends Scene {
         // TODO:  Fill in matrix operations and drawing code to draw the solar system scene (Requirements 3 and 4)
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
         let model_transform = Mat4.identity();
-        model_transform = model_transform.times(Mat4.translation(0, 5, 0,))
+        model_transform = model_transform.times(Mat4.translation(-5, 8, 0,))
         // model_transform = model_transform.times(Mat4.scale(2, 2, 2))
 
 
@@ -100,11 +375,23 @@ export class Spring_Scene extends Scene {
         d = (positionY-anchorY)/ 500;
 
 
-        this.shapes.spring(d).draw(context, program_state, model_transform, this.materials.phong);
+        //this.shapes.spring(d).draw(context, program_state, model_transform, this.materials.phong);
 
         // this.shapes.spring.copy_onto_graphics_card(context.context, ["position", "normal"], false);
 
         //this.shapes.spring.override({dis:d}).draw(context, program_state, model_transform, this.materials.phong);
+
+        this.shapes.cloth.addforce(vec3(0,-0.2,0.1).times(TIME_STEPSIZE2));
+        this.shapes.cloth.timestep();
+        this.shapes.cloth.ddraw();
+
+
+
+        //this.shapes.cube.draw(context, program_state, model_transform, this.materials.phong);
+        this.shapes.cloth.draw(context, program_state, model_transform, this.materials.phong2);
+        this.shapes.cloth.copy_onto_graphics_card(context.context, ["position", "normal"], false);
+
+
     }
 }
 
