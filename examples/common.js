@@ -369,6 +369,7 @@ const Cylindrical_Tube = defs.Cylindrical_Tube =
         }
     }
 
+
 const Cone_Tip = defs.Cone_Tip =
     class Cone_Tip extends Surface_Of_Revolution {
         // Note:  Touches the Z axis; squares degenerate into triangles as they sweep around.
@@ -390,6 +391,7 @@ const Torus = defs.Torus =
             Surface_Of_Revolution.insert_transformed_copy_into(this, [rows, columns, circle_points, texture_range]);
         }
     }
+
 
 const Spring = defs.Spring =
     class Spring extends Shape {
@@ -440,8 +442,6 @@ const Spring = defs.Spring =
 
         }*/
     }
-
-
 
 
 const Grid_Sphere = defs.Grid_Sphere =
@@ -496,6 +496,21 @@ const Rounded_Capped_Cylinder = defs.Rounded_Capped_Cylinder =
         }
     }
 
+const Arrow = defs.Arrow = 
+    class Arrow extends Shape {
+        constructor () {
+            super("position", "normal", "texture_coord");
+            let stack = [];
+            Subdivision_Sphere.insert_transformed_copy_into(this, [3], Mat4.rotation(0, 0, 1, 0).times(Mat4.scale(.15, .15, .15)));
+            this.drawOneAxis(Mat4.identity(), [[.67, 1], [0, 1]]);
+        }
+
+            drawOneAxis(transform, tex) {
+            // Use a different texture coordinate range for each of the three axes, so they show up differently.
+            Closed_Cone.insert_transformed_copy_into(this, [4, 10, tex], transform.times(Mat4.translation(0, 0, 2)).times(Mat4.scale(.15, .15, .15)));
+            Cylindrical_Tube.insert_transformed_copy_into(this, [7, 7, tex], transform.times(Mat4.translation(0, 0, 1)).times(Mat4.scale(.05, .05, 2)));
+        }
+    }
 
 const Axis_Arrows = defs.Axis_Arrows =
     class Axis_Arrows extends Shape {
@@ -518,6 +533,7 @@ const Axis_Arrows = defs.Axis_Arrows =
             Cylindrical_Tube.insert_transformed_copy_into(this, [7, 7, tex], transform.times(Mat4.translation(0, 0, 1)).times(Mat4.scale(.1, .1, 2)));
         }
     }
+
 
 
 const Minimal_Shape = defs.Minimal_Shape =
