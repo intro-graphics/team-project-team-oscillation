@@ -128,10 +128,10 @@ class cloth extends Shape {
 
         // making the upper left most three and right most three particles unmovable
         for (let i = 0; i < 3; i++) {
-            this.getParticle(0 + i, 0).offsetPos(vec3(0.5, 0.0, 0.0)); // moving the particle a bit towards the center, to make it hang more natural - because I like it ;)
+            this.getParticle(0 + i, 0).offsetPos(vec3(0.5, 0.0, 0.0)); // moving the particle a bit towards the center, to make it hang more natural
             this.getParticle(0 + i, 0).makeUnmovable();
 
-            this.getParticle(num_particles_width - 1 - i, 0).offsetPos(vec3(0.5, 0.0, 0.0)); // moving the particle a bit towards the center, to make it hang more natural - because I like it ;)
+            this.getParticle(num_particles_width - 1 - i, 0).offsetPos(vec3(0.5, 0.0, 0.0)); // moving the particle a bit towards the center, to make it hang more natural
             this.getParticle(num_particles_width- 1 - i, 0).makeUnmovable();
         }
         for (let particle of this.particles) {
@@ -139,10 +139,6 @@ class cloth extends Shape {
         }
         for (let x = 0; x < num_particles_width - 1; x++) {
             for (let y = 0; y < num_particles_height - 1; y++) {
-                //let d = this.getParticle(x + 1, y);
-                //console.log(d);
-                // d= this.getParticle(x,y);
-                //d = this.getParticle(x+1,y+1);
 
                 let normal = this.calcTriangleNormal(this.getParticle(x + 1, y), this.getParticle(x, y), this.getParticle(x, y + 1));
                 this.getParticle(x + 1, y).addToNormal(normal);
@@ -161,7 +157,7 @@ class cloth extends Shape {
             for (let y = 0; y < this.num_particles_height; y++) {
                 //this.arrays.normal.push(this.getParticle(x, y).getNormal());
                 this.arrays.normal[y*num_particles_width+x]= this.getParticle(x, y).getNormal();
-                //this.nr.push(this.getParticle(x, y).getNormal());
+
             }
         }
         //console.log(this.arrays.normal.length);
