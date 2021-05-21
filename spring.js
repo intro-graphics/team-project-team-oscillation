@@ -634,7 +634,7 @@ export class Spring_Scene extends Scene {
         let spring_model_transform = Mat4.identity();
         spring_model_transform = spring_model_transform.times(Mat4.translation(3,4.92, 0,))
         this.Spring = spring_model_transform.times(Mat4.translation(30,30, -100));
-        this.Cloth = model_transform.times(Mat4.translation(60,60, -160));
+        this.Cloth = model_transform.times(Mat4.translation(60,60, -145));
 
 
         springForceY = -k*(positionY - anchorY);
