@@ -377,7 +377,7 @@ export class Spring_Scene extends Scene {
             ring: new Material(new Ring_Shader()),
 
             phong2: new Material(new defs.Phong_Shader(),
-                {ambient: .4, diffusivity: .6, specularity: 0, smoothness: 40, color: hex_color("#e18dfc")}),
+                {ambient: .4, diffusivity: .4, specularity: 0, smoothness: 40, color: hex_color("#e18dfc")}),
 
             leg: new Material (new defs.Phong_Shader(),
             {ambient: .4, diffusivity: .6, specularity: .1, color: hex_color ("#c4cace")}),
@@ -414,24 +414,24 @@ export class Spring_Scene extends Scene {
         }
 
         this.initial_camera_location = Mat4.look_at(vec3(0, 2, 22), vec3(0, -0.2, 0), vec3(0, 4, 0));
-        this.attached = () => this.initial_camera_location;
+        //this.attached = () => this.initial_camera_location;
 
 
 
     }
-    /*
+
         make_control_panel() {
             // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.
-            this.key_triggered_button("View solar system", ["Control", "0"], () => this.attached = () => this.initial_camera_location);
+            this.key_triggered_button("View room", ["Control", "0"], () => this.attached =  undefined);
             this.new_line();
-            this.key_triggered_button("Attach to planet 1", ["Control", "1"], () => this.attached = () => this.planet_1);
-            this.key_triggered_button("Attach to planet 2", ["Control", "2"], () => this.attached = () => this.planet_2);
-            this.new_line();
-            this.key_triggered_button("Attach to planet 3", ["Control", "3"], () => this.attached = () => this.planet_3);
-            this.key_triggered_button("Attach to planet 4", ["Control", "4"], () => this.attached = () => this.planet_4);
-            this.new_line();
-            this.key_triggered_button("Attach to moon", ["Control", "m"], () => this.attached = () => this.moon);
-        }*/
+            this.key_triggered_button("Attach to spring", ["Control", "1"], () => this.attached = () => this.Spring);
+            this.key_triggered_button("Attach to cloth", ["Control", "2"], () => this.attached = () => this.Cloth);
+            //this.new_line();
+            //this.key_triggered_button("Attach to planet 3", ["Control", "3"], () => this.attached = () => this.planet_3);
+            //this.key_triggered_button("Attach to planet 4", ["Control", "4"], () => this.attached = () => this.planet_4);
+            //this.new_line();
+            //this.key_triggered_button("Attach to moon", ["Control", "m"], () => this.attached = () => this.moon);
+        }
 
     draw_desk (context,program_state) {
         let plat_transform = Mat4.identity();
@@ -612,6 +612,17 @@ export class Spring_Scene extends Scene {
         program_state.projection_transform = Mat4.perspective(
             Math.PI/4, context.width / context.height, .1, 1000);
 
+
+        if (this.attached !== undefined) {
+            let desired = Mat4.inverse(this.attached().times(Mat4.translation(0,0,-5)));
+            program_state.set_camera(desired.map((x,i) => Vector.from(program_state.camera_inverse[i]).mix(x, 0.1)));
+        }
+        else
+        {
+            let desired = this.initial_camera_location
+            program_state.set_camera(desired.map((x,i) => Vector.from(program_state.camera_inverse[i]).mix(x, 0.1)));
+        }
+
         // TODO: Lighting (Requirement 2)
         const light_position = vec4(0, 5, 5, 1);
         program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 1000)];
@@ -622,7 +633,8 @@ export class Spring_Scene extends Scene {
         model_transform = model_transform.times(Mat4.translation(1.85, 9.36, -4.8,)).times(Mat4.scale(1.03,1.3,1));
         let spring_model_transform = Mat4.identity();
         spring_model_transform = spring_model_transform.times(Mat4.translation(3,4.92, 0,))
-        // model_transform = model_transform.times(Mat4.scale(2, 2, 2))
+        this.Spring = spring_model_transform.times(Mat4.translation(30,30, -100));
+        this.Cloth = model_transform.times(Mat4.translation(60,60, -160));
 
 
         springForceY = -k*(positionY - anchorY);
@@ -652,8 +664,6 @@ export class Spring_Scene extends Scene {
         this.shapes.cloth.addforce(vec3(0,-0.2,0.02).times(TIME_STEPSIZE2));
         this.shapes.cloth.timestep();
         this.shapes.cloth.ddraw();
-
-
 
        // this.shapes.cube.draw(context, program_state, model_transform, this.materials.phong);
         this.shapes.cloth.draw(context, program_state, model_transform, this.materials.phong2);
