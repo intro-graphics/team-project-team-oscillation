@@ -4,6 +4,8 @@ const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene,Texture
 } = tiny;
 
+const {Textured_Phong} = defs
+
 let k = 1;
 let positionY = 10;
 let anchorY = 5;
@@ -380,7 +382,7 @@ export class Spring_Scene extends Scene {
             leg: new Material (new defs.Phong_Shader(),
             {ambient: .4, diffusivity: .6, specularity: .1, color: hex_color ("#c4cace")}),
             paper: new Material (new defs.Phong_Shader(),
-            {ambient: .6, diffusivity: .6, specularity: .1, color: hex_color ("#ffffff")}),
+            {ambient: .9, diffusivity: .6, specularity: .1, color: hex_color ("#ffffff")}),
             second: new Material (new defs.Phong_Shader(),
             {ambient: .6, diffusivity: .6, specularity: .1, color: hex_color ("#d1642e")}),
             minute: new Material (new defs.Phong_Shader(),
@@ -391,6 +393,21 @@ export class Spring_Scene extends Scene {
             {ambient:.5,diffusivity:.6, specularity: .1, color: hex_color ("#C0C0C0")}),
             weight1: new Material (new defs.Phong_Shader(),
             {ambient:.3,diffusivity:.6,specularity:.1,color: hex_color ("#6e9fd4")}),
+            wood1: new Material (new Textured_Phong(), {
+                color: hex_color ("#000000"),
+                ambient: 1.0, diffusivity: 0.1, specularity: 0.1,
+                texture: new Texture("assets/wood_new.jpeg") 
+            }),
+            wall_texture: new Material (new Textured_Phong(), {
+                color: hex_color ("#000000"),
+                ambient: 1.0, diffusivity: 0.1, specularity: 0.1,
+                texture: new Texture("assets/painted_wall.jpeg") 
+            }),
+            window_texture: new Material (new Textured_Phong(), {
+                color: hex_color ("#000000"),
+                ambient: 1.0, diffusivity: 0.1, specularity: 0.1,
+                texture: new Texture("assets/window_view.jpeg") 
+            }),            
 
 
 
@@ -480,25 +497,25 @@ export class Spring_Scene extends Scene {
         second_transform = second_transform.pre_multiply(Mat4.rotation(Math.PI/2,0,0,1));
         second_transform = second_transform.pre_multiply(Mat4.scale(0.6,0.7,0.6));
         second_transform = second_transform.pre_multiply(Mat4.rotation(-angle_sec,0,0,1));
-        second_transform = second_transform.pre_multiply(Mat4.translation(-5,6,-3.8));
+        second_transform = second_transform.pre_multiply(Mat4.translation(-5,6,-4.8));
 
         let min_transform = Mat4.identity();
         min_transform = min_transform.pre_multiply(Mat4.rotation(Math.PI/2,0,1,0));
         min_transform = min_transform.pre_multiply(Mat4.rotation(Math.PI/2,0,0,1));
         min_transform = min_transform.pre_multiply(Mat4.scale(0.8,0.55,0.8));
         min_transform = min_transform.pre_multiply(Mat4.rotation(-angle_min,0,0,1));
-        min_transform = min_transform.pre_multiply(Mat4.translation(-5,6,-3.8));
+        min_transform = min_transform.pre_multiply(Mat4.translation(-5,6,-4.8));
 
         let h_transform = Mat4.identity();
         h_transform = h_transform.pre_multiply(Mat4.rotation(Math.PI/2,0,1,0));
         h_transform = h_transform.pre_multiply(Mat4.rotation(Math.PI/2,0,0,1));
         h_transform = h_transform.pre_multiply(Mat4.scale(1,0.35,1));
         h_transform = h_transform.pre_multiply(Mat4.rotation(-angle_hr,0,0,1));
-        h_transform = h_transform.pre_multiply(Mat4.translation(-5,6,-3.8));
+        h_transform = h_transform.pre_multiply(Mat4.translation(-5,6,-4.8));
 
         let clock_transform = Mat4.identity();
         clock_transform = clock_transform.pre_multiply(Mat4.scale(1.8,1.8,0.3));
-        clock_transform = clock_transform.pre_multiply(Mat4.translation(-5,6,-4.1));
+        clock_transform = clock_transform.pre_multiply(Mat4.translation(-5,6,-5.1));
 
 
         this.shapes.cylinder.draw(context,program_state,clock_transform,this.materials.clock);
@@ -557,8 +574,28 @@ export class Spring_Scene extends Scene {
 
     draw_wall (context,program_state) {
         let back = Mat4.identity();
-        back = back.pre_multiply (Mat4.scale(15,15,20)).pre_multiply(Mat4.translation(0,6,-4));
+        back = back.pre_multiply (Mat4.scale(15,15,20)).pre_multiply(Mat4.translation(0,4,-5.3));
         this.shapes.square.draw(context,program_state,back,this.materials.paper);
+
+        let floor = Mat4.identity();
+        floor = floor.pre_multiply(Mat4.rotation(Math.PI/2,1,0,0)).pre_multiply(Mat4.scale(15,15,15))
+        .pre_multiply(Mat4.translation(0,-10.1,0));
+        this.shapes.square.draw(context,program_state,floor,this.materials.wood1);
+
+        let left = Mat4.identity();
+        left = left.pre_multiply(Mat4.rotation(Math.PI/2,0,1,0)).pre_multiply(Mat4.scale(15,15,15))
+        .pre_multiply(Mat4.translation(-15,0,0));
+        this.shapes.square.draw(context,program_state,left,this.materials.wall_texture);
+
+        let right = Mat4.identity();
+        right = right.pre_multiply(Mat4.rotation(Math.PI/2,0,1,0)).pre_multiply(Mat4.scale(15,15,15))
+        .pre_multiply(Mat4.translation(15,0,0));
+        this.shapes.square.draw(context,program_state,right,this.materials.wall_texture);
+
+        let window = Mat4.identity();
+        window = window. pre_multiply(Mat4.scale(4,4,4)).pre_multiply(Mat4.translation(6,6,-5.25));
+        this.shapes.square.draw(context,program_state,window,this.materials.window_texture);      
+
     }
 
 
@@ -582,7 +619,7 @@ export class Spring_Scene extends Scene {
         // TODO:  Fill in matrix operations and drawing code to draw the solar system scene (Requirements 3 and 4)
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
         let model_transform = Mat4.identity();
-        model_transform = model_transform.times(Mat4.translation(-10, 3, 0,))
+        model_transform = model_transform.times(Mat4.translation(1.85, 9.36, -4.8,)).times(Mat4.scale(1.03,1.3,1));
         let spring_model_transform = Mat4.identity();
         spring_model_transform = spring_model_transform.times(Mat4.translation(3, 4, 0,))
         // model_transform = model_transform.times(Mat4.scale(2, 2, 2))
@@ -621,6 +658,8 @@ export class Spring_Scene extends Scene {
        // this.shapes.cube.draw(context, program_state, model_transform, this.materials.phong);
         this.shapes.cloth.draw(context, program_state, model_transform, this.materials.phong2);
         this.shapes.cloth.copy_onto_graphics_card(context.context, ["position", "normal"], false);
+
+        //this.shapes.cube.draw(context,program_state,Mat4.identity(),this.materials.wood);
 
 
     }
