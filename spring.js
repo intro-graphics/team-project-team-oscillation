@@ -348,8 +348,8 @@ export class Spring_Scene extends Scene {
 
             spring: (x) => new defs.Spring(15, 500, x),
 
-            cloth: new cloth(14,10,55,45),
-            //spring:  new defs.Spring(15, 500, 1/100),
+            cloth: new cloth(7,5,55,45),
+            spring2:  new defs.Spring(15, 500, 1/100),
 
 
 
@@ -586,7 +586,9 @@ export class Spring_Scene extends Scene {
         // TODO:  Fill in matrix operations and drawing code to draw the solar system scene (Requirements 3 and 4)
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
         let model_transform = Mat4.identity();
-        model_transform = model_transform.times(Mat4.translation(-5, 8, 0,))
+        model_transform = model_transform.times(Mat4.translation(-10, 3, 0,))
+        let spring_model_transform = Mat4.identity();
+        spring_model_transform = spring_model_transform.times(Mat4.translation(3, 4, 0,))
         // model_transform = model_transform.times(Mat4.scale(2, 2, 2))
 
 
@@ -608,19 +610,19 @@ export class Spring_Scene extends Scene {
         this.draw_wall(context,program_state);
 
 
-        //this.shapes.spring(d).draw(context, program_state, model_transform, this.materials.phong);
+        this.shapes.spring2.draw(context, program_state, spring_model_transform, this.materials.phong);
 
         // this.shapes.spring.copy_onto_graphics_card(context.context, ["position", "normal"], false);
 
         //this.shapes.spring.override({dis:d}).draw(context, program_state, model_transform, this.materials.phong);
 
-        this.shapes.cloth.addforce(vec3(0,-0.2,0.1).times(TIME_STEPSIZE2));
+        this.shapes.cloth.addforce(vec3(0,-0.2,0.02).times(TIME_STEPSIZE2));
         this.shapes.cloth.timestep();
         this.shapes.cloth.ddraw();
 
 
 
-        //this.shapes.cube.draw(context, program_state, model_transform, this.materials.phong);
+       // this.shapes.cube.draw(context, program_state, model_transform, this.materials.phong);
         this.shapes.cloth.draw(context, program_state, model_transform, this.materials.phong2);
         this.shapes.cloth.copy_onto_graphics_card(context.context, ["position", "normal"], false);
 
