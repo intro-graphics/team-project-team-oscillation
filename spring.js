@@ -621,7 +621,7 @@ export class Spring_Scene extends Scene {
         let model_transform = Mat4.identity();
         model_transform = model_transform.times(Mat4.translation(1.85, 9.36, -4.8,)).times(Mat4.scale(1.03,1.3,1));
         let spring_model_transform = Mat4.identity();
-        spring_model_transform = spring_model_transform.times(Mat4.translation(3, 4, 0,))
+        spring_model_transform = spring_model_transform.times(Mat4.translation(3,4.92, 0,))
         // model_transform = model_transform.times(Mat4.scale(2, 2, 2))
 
 
