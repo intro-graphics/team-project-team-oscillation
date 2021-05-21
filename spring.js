@@ -630,7 +630,7 @@ export class Spring_Scene extends Scene {
         // TODO:  Fill in matrix operations and drawing code to draw the solar system scene (Requirements 3 and 4)
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
         let model_transform = Mat4.identity();
-        model_transform = model_transform.times(Mat4.translation(1.85, 9.36, -4.8,)).times(Mat4.scale(1.03,1.3,1));
+        model_transform = model_transform.times(Mat4.translation(2.0, 9.45, -4.8,)).times(Mat4.scale(1.02,1.3,1));
         let spring_model_transform = Mat4.identity();
         spring_model_transform = spring_model_transform.times(Mat4.translation(3,4.92, 0,))
         this.Spring = spring_model_transform.times(Mat4.translation(30,30, -100));
