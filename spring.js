@@ -32,6 +32,7 @@ class particle
         this.mass = 1;
         this.movable=true;
         this.accumulated_normal=vec3(0,0,0);
+        this.ymovable = true;
         //console.log(typeof (this.pos));
     }
 
@@ -39,6 +40,7 @@ class particle
     {
         this.acceleration = this.acceleration.plus(f.times(1/this.mass));
     }
+
    timeStep()
   {
     if(this.movable)
@@ -52,7 +54,9 @@ class particle
     getPos() {return this.pos;}
     resetAcceleration() {this.acceleration = vec3(0,0,0);}
     offsetPos(v) { if(this.movable) this.pos = this.pos.plus(v);}
+    movehori(v){ if(this.ymovable) this.pos = this.pos.plus(v);}
     makeUnmovable() {this.movable = false;}
+    //makeMovable(){this.movable = true;}
     addToNormal(normal)
     {
       this.accumulated_normal = this.accumulated_normal.plus(normal.normalized());
@@ -71,12 +75,14 @@ class constraint
     }
     satisfyConstraint()
     {
+
         let p1_to_p2 = this.p2.getPos().minus(this.p1.getPos()); // vector from p1 to p2
         let current_distance = p1_to_p2.norm(); // current distance between p1 and p2
         let correctionVector = p1_to_p2.times((1 - this.rest_distance/current_distance)); // The offset vector that could moves p1 into a distance of rest_distance to p2
         let correctionVectorHalf = correctionVector.times(0.5); // Lets make it half that length, so that we can move BOTH p1 and p2.
         this.p1.offsetPos(correctionVectorHalf); // correctionVectorHalf is pointing from p1 to p2, so the length should move p1 half the length needed to satisfy the constraint.
-        this.p2.offsetPos(correctionVectorHalf.times(-1));
+        this.p2.offsetPos(correctionVectorHalf.times(-1));//}
+
     }
 
 }
@@ -132,31 +138,17 @@ class cloth extends Shape {
         }
 
         // making the upper left most three and right most three particles unmovable
-        /*for (let i = 0; i < 3; i++) {
+        for (let i = 0; i < 3; i++) {
             this.getParticle(0 + i, 0).offsetPos(vec3(0.5, 0.0, 0.0)); // moving the particle a bit towards the center, to make it hang more natural
             this.getParticle(0 + i, 0).makeUnmovable();
 
             this.getParticle(num_particles_width - 1 - i, 0).offsetPos(vec3(0.5, 0.0, 0.0)); // moving the particle a bit towards the center, to make it hang more natural
             this.getParticle(num_particles_width- 1 - i, 0).makeUnmovable();
-        }*/
+        }
 
-        for (let i = 0 ;i < num_particles_width;i=i+6)
+        /*for (let i = 0 ;i < num_particles_width;i=i+6)
         {
-            /*if(i===0||i===(num_particles_width-2))
-            {
-                for(let j=i;j<i+2;j++)
-                {
-                    this.getParticle(0 + j, 0).offsetPos(vec3(0.5, 0.0, 0.0)); // moving the particle a bit towards the center, to make it hang more natural
-                    this.getParticle(0 + j, 0).makeUnmovable();
-                }
-            }
-            else
-            {
-                for(let j=i;j<i+2;j++)
-                {
-                    this.getParticle(0 + j, 0).makeUnmovable();
-                }
-            }*/
+
             if(i===0)
             {
                 for(let j=i;j<i+2;j++)
@@ -175,10 +167,7 @@ class cloth extends Shape {
             }
 
 
-        }
-
-
-
+        }*/
 
 
         for (let particle of this.particles) {
@@ -221,7 +210,7 @@ class cloth extends Shape {
                 }5
             }
 
-            console.log(this.indices);
+            //console.log(this.indices);
 
         }
     }
@@ -244,7 +233,7 @@ class cloth extends Shape {
 {
     let normal = this.calcTriangleNormal(p1,p2,p3);
     let d = normal.normalized();
-    let force = normal*(d.dot(direction));
+    let force = normal.times((d.dot(direction)));
     p1.addForce(force);
     p2.addForce(force);
     p3.addForce(force);
@@ -272,6 +261,63 @@ class cloth extends Shape {
         }
     }
 
+    windForce(direction)
+   {
+    for(let x = 0; x<this.num_particles_width-1; x++)
+    {
+       for(let y=0; y<this.num_particles_height-1; y++)
+       {
+           this.addWindForcesForTriangle(this.getParticle(x+1,y),this.getParticle(x,y),this.getParticle(x,y+1),direction);
+           this.addWindForcesForTriangle(this.getParticle(x+1,y+1),this.getParticle(x+1,y),this.getParticle(x,y+1),direction);
+        }
+    }
+   }
+
+   collision()
+   {
+       for(let p of this.particles)
+       {
+           if(p.getPos().z()<-5)
+           {
+               //console.log(p.getPos().z());
+               p.offsetPos(vec(0,0,2));
+               //console.log(p.getPos().z());
+           }
+       }
+   }
+    open()
+    {
+        for (let i = 0 ;i < this.num_particles_width; i=i+6)
+        {
+
+            if(i===0)
+            {
+
+            }
+            else
+            {
+                for(let j=i;j<i+2;j++)
+                {
+                    this.getParticle(0 + j, 0).movehori(vec3(-0.01*(1+(i/6)), 0.0, 0.0));
+                }
+            }
+
+        }
+
+    }
+    close()
+    {
+        for (let i = 0 ;i < this.num_particles_width; i=i+6)
+        {
+            if(i!=1)
+            {
+                for(let j=i;j<i+2;j++)
+                {
+                    this.getParticle(0 + j, 0).movehori(vec3(0.01*(1+(i/6)), 0.0, 0.0));
+                }
+            }
+        }
+    }
     ddraw()
     {
         this.arrays.position=[];
@@ -279,6 +325,7 @@ class cloth extends Shape {
         for(let p of this.particles)
         {
             this.arrays.position.push(p.getPos());
+            //console.log(p.getPos().z());
         }
 
         for (let particle of this.particles) {
@@ -391,7 +438,7 @@ export class Spring_Scene extends Scene {
 
             //spring: (x) => new defs.Spring(15, 500, x),
 
-            cloth: new cloth(7,5,56,45),
+            cloth: new cloth(13,11,50,45),
 
             spring:  new defs.Spring(15, 500),
 
@@ -400,8 +447,19 @@ export class Spring_Scene extends Scene {
             square: new defs.Square(),
             arrow: new defs.Arrow(),
             text: new Text_Line(35),
+            wood:new  defs.Square(),
+            wall: new defs.Square(),
 
         };
+        for (let i=0; i < this.shapes.wood.arrays.texture_coord.length;i++)
+        {
+            this.shapes.wood.arrays.texture_coord[i].scale_by(3);
+        }
+        for (let i=0; i < this.shapes.wood.arrays.texture_coord.length;i++)
+        {
+            this.shapes.wall.arrays.texture_coord[i].scale_by(2);
+        }
+
 
         const texture = new defs.Textured_Phong(1);
         this.text_image = new Material(texture, {
@@ -416,16 +474,16 @@ export class Spring_Scene extends Scene {
             phong: new Material(new defs.Phong_Shader(),
                 {ambient: .4, diffusivity: .6, specularity: 1, smoothness: 40, color: hex_color("#910101")}),
             phong3:new Material(new defs.Phong_Shader(),
-                {ambient: 1, diffusivity: .1, specularity: 0, smoothness: 40, color: hex_color("#ddba8a")}),
+                {ambient: .9, diffusivity: .2, specularity: 0, smoothness: 40, color: hex_color("#ddba8a")}),//#ddba8a
             gouraud: new Material(new Gouraud_Shader(),
                 {ambient: .4, diffusivity: .6, specularity: .8, smoothness: 40, color: hex_color("#fff53e")}),
             ring: new Material(new Ring_Shader()),
 
             phong2: new Material(new defs.Phong_Shader(),
-                {ambient: .8, diffusivity: .1, specularity: 0, smoothness: 40, color: hex_color("#CFE8FF")}),
+                {ambient: .8, diffusivity: .5, specularity: 0, smoothness: 40, color: hex_color("#b9a081")}),
 
             leg: new Material (new defs.Phong_Shader(),
-            {ambient: .4, diffusivity: .6, specularity: .1, color: hex_color ("#c4cace")}),
+            {ambient: .9, diffusivity: .6, specularity: 1, color: hex_color ("#c0b284")}),
             paper: new Material (new defs.Phong_Shader(),
             {ambient: .9, diffusivity: .6, specularity: .1, color: hex_color ("#ffffff")}),
             second: new Material (new defs.Phong_Shader(),
@@ -440,26 +498,24 @@ export class Spring_Scene extends Scene {
             {ambient:.3,diffusivity:.6,specularity:.1,color: hex_color ("#6e9fd4")}),
             wood1: new Material (new Textured_Phong(), {
                 color: hex_color ("#000000"),
-                ambient: 1.0, diffusivity: 0.1, specularity: 0.1,
-                texture: new Texture("assets/wood_new_2.png")
+                ambient: 1.0, diffusivity: 0.1, specularity: 1,
+                texture: new Texture("assets/wood_new_5.png")
             }),
             wall_texture: new Material (new Textured_Phong(), {
                 color: hex_color ("#000000"),
                 ambient: .9, diffusivity: 0.1, specularity: 0.1,
-                texture: new Texture("assets/Wallpaper.png")
+                texture: new Texture("assets/Wallpaper_2.png")
             }),
             wall_texture2: new Material (new Textured_Phong(), {
                 color: hex_color ("#000000"),
                 ambient: .95, diffusivity: 0.1, specularity: 0.1,
-                texture: new Texture("assets/Wallpaper.png")
+                texture: new Texture("assets/Wallpaper_2.png")
             }),
             window_texture: new Material (new Textured_Phong(), {
                 color: hex_color ("#000000"),
                 ambient: 1.0, diffusivity: 0.1, specularity: 0.1,
-                texture: new Texture("assets/window_view.jpeg") 
-            }),            
-
-
+                texture: new Texture("assets/window_view.png")
+            }),
 
         }
 
@@ -467,7 +523,8 @@ export class Spring_Scene extends Scene {
         //this.attached = () => this.initial_camera_location;
 
         this.cloth_transform = Mat4.identity();
-        this.cloth_transform = this.cloth_transform.times(Mat4.translation(2.9, 9.45, -4.8,)).times(Mat4.scale(1.21,1.3,1));
+        this.cloth_transform  = this.cloth_transform.times(Mat4.translation(-9,7.3,0)).times(Mat4.scale(0.57,0.6,1));
+        //this.cloth_transform = this.cloth_transform.times(Mat4.translation(2.9, 9.45, -4.8,)).times(Mat4.scale(1.21,1.3,1));
 
         this.x = 1;
         this.open = false;
@@ -563,25 +620,25 @@ export class Spring_Scene extends Scene {
         second_transform = second_transform.pre_multiply(Mat4.rotation(Math.PI/2,0,0,1));
         second_transform = second_transform.pre_multiply(Mat4.scale(0.6,0.7,0.6));
         second_transform = second_transform.pre_multiply(Mat4.rotation(-angle_sec,0,0,1));
-        second_transform = second_transform.pre_multiply(Mat4.translation(-5,6,-4.8));
+        second_transform = second_transform.pre_multiply(Mat4.translation(12,6,-4.8));//-5,6,-4.8));
 
         let min_transform = Mat4.identity();
         min_transform = min_transform.pre_multiply(Mat4.rotation(Math.PI/2,0,1,0));
         min_transform = min_transform.pre_multiply(Mat4.rotation(Math.PI/2,0,0,1));
         min_transform = min_transform.pre_multiply(Mat4.scale(0.8,0.55,0.8));
         min_transform = min_transform.pre_multiply(Mat4.rotation(-angle_min,0,0,1));
-        min_transform = min_transform.pre_multiply(Mat4.translation(-5,6,-4.8));
+        min_transform = min_transform.pre_multiply(Mat4.translation(12,6,-4.8));
 
         let h_transform = Mat4.identity();
         h_transform = h_transform.pre_multiply(Mat4.rotation(Math.PI/2,0,1,0));
         h_transform = h_transform.pre_multiply(Mat4.rotation(Math.PI/2,0,0,1));
         h_transform = h_transform.pre_multiply(Mat4.scale(1,0.35,1));
         h_transform = h_transform.pre_multiply(Mat4.rotation(-angle_hr,0,0,1));
-        h_transform = h_transform.pre_multiply(Mat4.translation(-5,6,-4.8));
+        h_transform = h_transform.pre_multiply(Mat4.translation(12,6,-4.8));
 
         let clock_transform = Mat4.identity();
         clock_transform = clock_transform.pre_multiply(Mat4.scale(1.8,1.8,0.3));
-        clock_transform = clock_transform.pre_multiply(Mat4.translation(-5,6,-5.1));
+        clock_transform = clock_transform.pre_multiply(Mat4.translation(12,6,-5.1));
 
 
         this.shapes.cylinder.draw(context,program_state,clock_transform,this.materials.clock);
@@ -641,25 +698,25 @@ export class Spring_Scene extends Scene {
     draw_wall (context,program_state) {
         let back = Mat4.identity();
         back = back.pre_multiply (Mat4.scale(15,15,20)).pre_multiply(Mat4.translation(0,4,-5.3));
-        this.shapes.square.draw(context,program_state,back,this.materials.wall_texture2);//.paper);
+        this.shapes.wall.draw(context,program_state,back,this.materials.wall_texture2);//.paper);
 
         let floor = Mat4.identity();
         floor = floor.pre_multiply(Mat4.rotation(Math.PI/2,1,0,0)).pre_multiply(Mat4.scale(15,15,15))
         .pre_multiply(Mat4.translation(0,-10.1,0));
-        this.shapes.square.draw(context,program_state,floor,this.materials.wood1);
+        this.shapes.wood.draw(context,program_state,floor,this.materials.wood1);
 
         let left = Mat4.identity();
         left = left.pre_multiply(Mat4.rotation(Math.PI/2,0,1,0)).pre_multiply(Mat4.scale(15,15,15))
         .pre_multiply(Mat4.translation(-15,0,0));
-        this.shapes.square.draw(context,program_state,left,this.materials.wall_texture);
+        this.shapes.wall.draw(context,program_state,left,this.materials.wall_texture);
 
         let right = Mat4.identity();
         right = right.pre_multiply(Mat4.rotation(Math.PI/2,0,1,0)).pre_multiply(Mat4.scale(15,15,15))
         .pre_multiply(Mat4.translation(15,0,0));
-        this.shapes.square.draw(context,program_state,right,this.materials.wall_texture);
+        this.shapes.wall.draw(context,program_state,right,this.materials.wall_texture);
 
         let window = Mat4.identity();
-        window = window. pre_multiply(Mat4.scale(4,4,4)).pre_multiply(Mat4.translation(6,6,-5.25));
+        window = window. pre_multiply(Mat4.scale(5,5,1)).pre_multiply(Mat4.translation(-6,4,-5.25));//6,6
         this.shapes.square.draw(context,program_state,window,this.materials.window_texture);      
 
     }
@@ -698,12 +755,11 @@ export class Spring_Scene extends Scene {
         let model_transform = Mat4.identity();
 
         //console.log(dt);
-        if(this.open && this.log>0.3)
+        /*if(this.open && this.log>0.3)
         {
-            //this.close = false;
+            this.shapes.cloth.open();
             this.x = 0.97;
             this.log = this.log * 0.97;
-           // console.log(this.x);
         }
         else if(this.open)
         {
@@ -712,7 +768,7 @@ export class Spring_Scene extends Scene {
         }
         if(this.close && this.log<1.21)
         {
-            //this.open = false;
+            this.shapes.cloth.close();
             this.x = 1.02;
             this.log = this.log*1.02;
         }
@@ -721,14 +777,14 @@ export class Spring_Scene extends Scene {
             this.x = 1;
             this.log = 1.21;
             this.close = false;
-        }
+        }*/
 
-        this.cloth_transform = this.cloth_transform.times(Mat4.scale(this.x,1,1));
+        this.cloth_transform = this.cloth_transform.times(Mat4.scale(1,1,1));
 
         let spring_model_transform = Mat4.identity();
         spring_model_transform = spring_model_transform.times(Mat4.translation(3,4.92, 0,))
         this.Spring = spring_model_transform.times(Mat4.translation(30,30, -100));
-        this.Cloth = Mat4.identity().times(Mat4.translation(2.9, 9.45, -4.8)).times(Mat4.scale(1.21,1.3,1)).times(Mat4.translation(60,60, -145));
+        this.Cloth = Mat4.identity().times(Mat4.translation(-9,7.3,0)).times(Mat4.scale(0.57,0.6,1)).times(Mat4.translation(-20,35, -140));
 
 
         springForceY = -k*(positionY - anchorY);
@@ -755,8 +811,20 @@ export class Spring_Scene extends Scene {
 
         //this.shapes.spring.override({dis:d}).draw(context, program_state, model_transform, this.materials.phong);
 
-        this.shapes.cloth.addforce(vec3(0,-0.5,0.02).times(TIME_STEPSIZE2));
+        //this.shapes.cloth.addforce(vec3(0,-0.2,0.02).times(TIME_STEPSIZE2));
+        if(this.open)
+        {
+            this.shapes.cloth.addforce(vec3(0,-0.25,0.02).times(TIME_STEPSIZE2));
+            this.shapes.cloth.windForce(vec3(0.2,0,0.7).times(TIME_STEPSIZE2));
+        }
+        else
+        {
+            this.shapes.cloth.addforce(vec3(0,-0.2,0.02).times(TIME_STEPSIZE2));
+        }
+
+
         this.shapes.cloth.timestep();
+        this.shapes.cloth.collision();
         this.shapes.cloth.ddraw();
 
        // this.shapes.cube.draw(context, program_state, model_transform, this.materials.phong);

@@ -479,7 +479,6 @@ const Spring = defs.Spring =
         {
             this.arrays.position=[];
             this.arrays.normal=[];
-            console.log(d);
             let a = 22*Math.PI / this.c;
             let rotation = Matrix.of(
                 [Math.cos(a),0,Math.sin(a),0],

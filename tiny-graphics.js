@@ -180,6 +180,11 @@ const Vector3 = tiny.Vector3 =
             return Vector3.unsafe(x, y, z);
         }
 
+        z()
+        {
+            return this[2];
+        }
+
         copy() {
             return Vector3.from(this)
         }
