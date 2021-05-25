@@ -415,12 +415,14 @@ export class Spring_Scene extends Scene {
             //        (Requirement 4)
             phong: new Material(new defs.Phong_Shader(),
                 {ambient: .4, diffusivity: .6, specularity: 1, smoothness: 40, color: hex_color("#910101")}),
+            phong3:new Material(new defs.Phong_Shader(),
+                {ambient: 1, diffusivity: .1, specularity: 0, smoothness: 40, color: hex_color("#ddba8a")}),
             gouraud: new Material(new Gouraud_Shader(),
                 {ambient: .4, diffusivity: .6, specularity: .8, smoothness: 40, color: hex_color("#fff53e")}),
             ring: new Material(new Ring_Shader()),
 
             phong2: new Material(new defs.Phong_Shader(),
-                {ambient: .4, diffusivity: .4, specularity: 0, smoothness: 40, color: hex_color("#e18dfc")}),
+                {ambient: .8, diffusivity: .1, specularity: 0, smoothness: 40, color: hex_color("#CFE8FF")}),
 
             leg: new Material (new defs.Phong_Shader(),
             {ambient: .4, diffusivity: .6, specularity: .1, color: hex_color ("#c4cace")}),
@@ -439,12 +441,17 @@ export class Spring_Scene extends Scene {
             wood1: new Material (new Textured_Phong(), {
                 color: hex_color ("#000000"),
                 ambient: 1.0, diffusivity: 0.1, specularity: 0.1,
-                texture: new Texture("assets/wood_new.jpeg") 
+                texture: new Texture("assets/wood_new_2.png")
             }),
             wall_texture: new Material (new Textured_Phong(), {
                 color: hex_color ("#000000"),
-                ambient: 1.0, diffusivity: 0.1, specularity: 0.1,
-                texture: new Texture("assets/painted_wall.jpeg") 
+                ambient: .9, diffusivity: 0.1, specularity: 0.1,
+                texture: new Texture("assets/Wallpaper.png")
+            }),
+            wall_texture2: new Material (new Textured_Phong(), {
+                color: hex_color ("#000000"),
+                ambient: .95, diffusivity: 0.1, specularity: 0.1,
+                texture: new Texture("assets/Wallpaper.png")
             }),
             window_texture: new Material (new Textured_Phong(), {
                 color: hex_color ("#000000"),
@@ -456,7 +463,7 @@ export class Spring_Scene extends Scene {
 
         }
 
-        this.initial_camera_location = Mat4.look_at(vec3(0, 2, 22), vec3(0, -0.2, 0), vec3(0, 4, 0));
+        this.initial_camera_location = Mat4.look_at(vec3(0, 2, 30), vec3(0, -0.2, 0), vec3(0, 4, 0));
         //this.attached = () => this.initial_camera_location;
 
         this.cloth_transform = Mat4.identity();
@@ -517,7 +524,7 @@ export class Spring_Scene extends Scene {
         leg_4 = leg_4.pre_multiply (Mat4.translation(7.8,-7.5,3.8));
 
 
-        this.shapes.cube.draw(context,program_state,plat_transform,this.materials.phong);
+        this.shapes.cube.draw(context,program_state,plat_transform,this.materials.phong3);
         this.shapes.cylinder.draw(context,program_state,leg_1,this.materials.leg);
         this.shapes.cylinder.draw(context,program_state,leg_2,this.materials.leg);
         this.shapes.cylinder.draw(context,program_state,leg_3,this.materials.leg);
@@ -634,7 +641,7 @@ export class Spring_Scene extends Scene {
     draw_wall (context,program_state) {
         let back = Mat4.identity();
         back = back.pre_multiply (Mat4.scale(15,15,20)).pre_multiply(Mat4.translation(0,4,-5.3));
-        this.shapes.square.draw(context,program_state,back,this.materials.paper);
+        this.shapes.square.draw(context,program_state,back,this.materials.wall_texture2);//.paper);
 
         let floor = Mat4.identity();
         floor = floor.pre_multiply(Mat4.rotation(Math.PI/2,1,0,0)).pre_multiply(Mat4.scale(15,15,15))
