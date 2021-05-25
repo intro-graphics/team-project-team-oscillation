@@ -396,22 +396,90 @@ const Torus = defs.Torus =
 const Spring = defs.Spring =
     class Spring extends Shape {
         // Build a donut shape.  An example of a surface of revolution.
-        constructor(rows, columns, d,texture_range) {
+        constructor(rows, columns,texture_coord_range = [[0, rows], [0, columns]]) {
             super("position", "normal", "texture_coord");
-            this.d=d;
+
             const circle_points = Array(rows).fill(vec3(0, 1 / 10, 0))
                 .map((p, i, a) => Mat4.translation(-2 / 3, 0, 0)
                     .times(Mat4.rotation(i / (a.length - 1) * 2 * Math.PI, 0, 0, 1))
                     .times(Mat4.scale(1, 1, 3))
                     .times(p.to4(1)).to3());
-            Helix.insert_transformed_copy_into(this, [rows, columns, circle_points, this.d,texture_range]);
+            //Helix.insert_transformed_copy_into(this, [rows, columns, circle_points, this.d,texture_range]);
             this.p = circle_points;
             this.r = rows;
             this.c = columns;
 
+            let a = 22*Math.PI / this.c;
+            let rotation = Matrix.of(
+                [Math.cos(a),0,Math.sin(a),0],
+                [0,1,0,-1/100],
+                [-Math.sin(a),0,Math.cos(a),0],
+                [0,0,0,1]
+            );
+
+            const row_operation = i => Grid_Patch.sample_array(this.p, i),
+                column_operation = (j, p) => rotation.times(p.to4(1)).to3();
+
+            let points = [];
+            for (let r = 0; r <= this.r; r++) {
+                points.push(new Array(this.c + 1));
+                // Allocate a 2D array.
+                // Use next_row_function to generate the start point of each row. Pass in the progress ratio,
+                // and the previous point if it existed.
+                points[r][0] = row_operation(r / this.r, points[r - 1] && points[r - 1][0]);
+            }
+            for (let r = 0; r <= this.r; r++) {
+                // From those, use next_column function to generate the remaining points:
+                for (let c = 0; c <=this.c; c++) {
+                    if (c > 0) points[r][c] = column_operation(c / this.c, points[r][c - 1], r / this.r);
+
+                    this.arrays.position.push(points[r][c]);
+
+                    const a1 = c / columns, a2 = r / rows, x_range = texture_coord_range[0],
+                        y_range = texture_coord_range[1];
+                    this.arrays.texture_coord.push(vec((a1) * x_range[1] + (1 - a1) * x_range[0], (a2) * y_range[1] + (1 - a2) * y_range[0]));
+
+                }
+            }
+
+
+            for (let r = 0; r <= this.r; r++) {
+                // Generate normals by averaging the cross products of all defined neighbor pairs.
+                for (let c = 0; c <= this.c; c++) {
+                    let curr = points[r][c], neighbors = new Array(4), normal = vec3(0, 0, 0);
+                    // Store each neighbor by rotational order.
+                    for (let [i, dir] of [[-1, 0], [0, 1], [1, 0], [0, -1]].entries())
+                        neighbors[i] = points[r + dir[1]] && points[r + dir[1]][c + dir[0]];
+                    // Leave "undefined" in the array wherever
+                    // we hit a boundary.
+                    // Take cross-products of pairs of neighbors, proceeding
+                    // a consistent rotational direction through the pairs:
+                    for (let i = 0; i < 4; i++)
+                        if (neighbors[i] && neighbors[(i + 1) % 4])
+                            normal = normal.plus(neighbors[i].minus(curr).cross(neighbors[(i + 1) % 4].minus(curr)));
+                    normal.normalize();
+                    // Normalize the sum to get the average vector.
+                    // Store the normal if it's valid (not NaN or zero length), otherwise use a default:
+                    if (normal.every(x => x == x) && normal.norm() > .01) this.arrays.normal.push(normal.copy());
+                    else this.arrays.normal.push(vec3(0, 0, 1));
+                }
+            }
+
+
+            for (let h = 0; h < rows; h++) {
+                // Generate a sequence like this (if #columns is 10):
+                for (let i = 0; i < 2 * columns; i++)    // "1 11 0  11 1 12  2 12 1  12 2 13  3 13 2  13 3 14  4 14 3..."
+                    for (let j = 0; j < 3; j++)
+                        this.indices.push(h * (columns + 1) + columns * ((i + (j % 2)) % 2) + (~~((j % 3) / 2) ?
+                            (~~(i / 2) + 2 * (i % 2)) : (~~(i / 2) + 1)));
+            }
+
         }
-        /*func(d)
+        func(d)
         {
+            this.arrays.position=[];
+            this.arrays.normal=[];
+            console.log(d);
             let a = 22*Math.PI / this.c;
             let rotation = Matrix.of(
                 [Math.cos(a),0,Math.sin(a),0],
@@ -436,11 +504,36 @@ const Spring = defs.Spring =
                 for (let c = 0; c <=this.c; c++) {
                     if (c > 0) points[r][c] = column_operation(c / this.c, points[r][c - 1], r / this.r);
 
+                    this.arrays.position.push(points[r][c]);
+
+
                 }
             }
-            return points;
 
-        }*/
+
+            for (let r = 0; r <= this.r; r++) {
+                // Generate normals by averaging the cross products of all defined neighbor pairs.
+                for (let c = 0; c <= this.c; c++) {
+                    let curr = points[r][c], neighbors = new Array(4), normal = vec3(0, 0, 0);
+                    // Store each neighbor by rotational order.
+                    for (let [i, dir] of [[-1, 0], [0, 1], [1, 0], [0, -1]].entries())
+                        neighbors[i] = points[r + dir[1]] && points[r + dir[1]][c + dir[0]];
+                    // Leave "undefined" in the array wherever
+                    // we hit a boundary.
+                    // Take cross-products of pairs of neighbors, proceeding
+                    // a consistent rotational direction through the pairs:
+                    for (let i = 0; i < 4; i++)
+                        if (neighbors[i] && neighbors[(i + 1) % 4])
+                            normal = normal.plus(neighbors[i].minus(curr).cross(neighbors[(i + 1) % 4].minus(curr)));
+                    normal.normalize();
+                    // Normalize the sum to get the average vector.
+                    // Store the normal if it's valid (not NaN or zero length), otherwise use a default:
+                    if (normal.every(x => x == x) && normal.norm() > .01) this.arrays.normal.push(normal.copy());
+                    else this.arrays.normal.push(vec3(0, 0, 1));
+                }
+            }
+
+        }
     }
 
 
