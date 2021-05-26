@@ -277,13 +277,27 @@ class cloth extends Shape {
    {
        for(let p of this.particles)
        {
-           if(p.getPos().z()<-5)
+           if(p.getPos().z()<-4)
            {
+               /*let d = (p.getPos().minus(p.old_pos)).normalized();
+               //p.getPos().z()+d.times(-1).times(x).z() = -5
+               let x = (-5-p.getPos().z())/d.times(-1).z();
+
+               let n = vec3(0,0,1);
+               let reflection = d.minus(n.times((d.dot(n))*2));
+               p.offsetPos(reflection.normalized().times(x));
+               console.log(p.getPos().z());*/
+
+               //console.log(reflection);
+               //p.offsetPos(vec(0,0,2));
                //console.log(p.getPos().z());
-               p.offsetPos(vec(0,0,2));
-               //console.log(p.getPos().z());
+               //console.log(p.acceleration);
+               //p.acceleration[2] = p.acceleration[2]+400*p.acceleration[2];
+               //p.addForce(vec3(0,0,25));
+
            }
        }
+
    }
     open()
     {
@@ -325,7 +339,6 @@ class cloth extends Shape {
         for(let p of this.particles)
         {
             this.arrays.position.push(p.getPos());
-            //console.log(p.getPos().z());
         }
 
         for (let particle of this.particles) {
@@ -523,7 +536,7 @@ export class Spring_Scene extends Scene {
         //this.attached = () => this.initial_camera_location;
 
         this.cloth_transform = Mat4.identity();
-        this.cloth_transform  = this.cloth_transform.times(Mat4.translation(-9,7.3,0)).times(Mat4.scale(0.57,0.6,1));
+        this.cloth_transform  = this.cloth_transform.times(Mat4.translation(-9.8,7.7,-4.5)).times(Mat4.scale(0.57,0.65,1));
         //this.cloth_transform = this.cloth_transform.times(Mat4.translation(2.9, 9.45, -4.8,)).times(Mat4.scale(1.21,1.3,1));
 
         this.x = 1;
@@ -540,20 +553,15 @@ export class Spring_Scene extends Scene {
             this.key_triggered_button("Attach to spring", ["Control", "1"], () => this.attached = () => this.Spring);
             this.key_triggered_button("Attach to cloth", ["Control", "2"], () => this.attached = () => this.Cloth);
             this.new_line();
-            this.key_triggered_button("open", ["o"], () => {
+            this.key_triggered_button("Wind", ["w"], () => {
                 this.open = true;
-                this.close = false;
+                //this.close = false;
             });
-            this.key_triggered_button("close", ["c"], () => {
+            /*this.key_triggered_button("close", ["c"], () => {
                 this.close = true;
                 this.open = false;
-            });
+            });*/
 
-            //this.new_line();
-            //this.key_triggered_button("Attach to planet 3", ["Control", "3"], () => this.attached = () => this.planet_3);
-            //this.key_triggered_button("Attach to planet 4", ["Control", "4"], () => this.attached = () => this.planet_4);
-            //this.new_line();
-            //this.key_triggered_button("Attach to moon", ["Control", "m"], () => this.attached = () => this.moon);
         }
 
     draw_desk (context,program_state) {
@@ -784,7 +792,7 @@ export class Spring_Scene extends Scene {
         let spring_model_transform = Mat4.identity();
         spring_model_transform = spring_model_transform.times(Mat4.translation(3,4.92, 0,))
         this.Spring = spring_model_transform.times(Mat4.translation(30,30, -100));
-        this.Cloth = Mat4.identity().times(Mat4.translation(-9,7.3,0)).times(Mat4.scale(0.57,0.6,1)).times(Mat4.translation(-20,35, -140));
+        this.Cloth = Mat4.identity().times(Mat4.translation(-9.9,7.7,-4.8)).times(Mat4.scale(0.57,0.6,1)).times(Mat4.translation(-40,35, -140));
 
 
         springForceY = -k*(positionY - anchorY);
@@ -814,17 +822,17 @@ export class Spring_Scene extends Scene {
         //this.shapes.cloth.addforce(vec3(0,-0.2,0.02).times(TIME_STEPSIZE2));
         if(this.open)
         {
-            this.shapes.cloth.addforce(vec3(0,-0.25,0.02).times(TIME_STEPSIZE2));
-            this.shapes.cloth.windForce(vec3(0.2,0,0.7).times(TIME_STEPSIZE2));
+            this.shapes.cloth.addforce(vec3(0,-0.25,0.01).times(TIME_STEPSIZE2));
+            this.shapes.cloth.windForce(vec3(0,0,1.1).times(TIME_STEPSIZE2));
         }
         else
         {
             this.shapes.cloth.addforce(vec3(0,-0.2,0.02).times(TIME_STEPSIZE2));
         }
 
-
+        //this.shapes.cloth.collision();
         this.shapes.cloth.timestep();
-        this.shapes.cloth.collision();
+
         this.shapes.cloth.ddraw();
 
        // this.shapes.cube.draw(context, program_state, model_transform, this.materials.phong);
