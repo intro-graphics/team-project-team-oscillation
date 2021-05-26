@@ -468,10 +468,6 @@ export class Spring_Scene extends Scene {
         {
             this.shapes.wood.arrays.texture_coord[i].scale_by(3);
         }
-        for (let i=0; i < this.shapes.wood.arrays.texture_coord.length;i++)
-        {
-            this.shapes.wall.arrays.texture_coord[i].scale_by(2);
-        }
 
 
         const texture = new defs.Textured_Phong(1);
@@ -517,12 +513,12 @@ export class Spring_Scene extends Scene {
             wall_texture: new Material (new Textured_Phong(), {
                 color: hex_color ("#000000"),
                 ambient: .9, diffusivity: 0.1, specularity: 0.1,
-                texture: new Texture("assets/Wallpaper_2.png")
+                texture: new Texture("assets/Wallpaper_3.jpg")
             }),
             wall_texture2: new Material (new Textured_Phong(), {
                 color: hex_color ("#000000"),
                 ambient: .95, diffusivity: 0.1, specularity: 0.1,
-                texture: new Texture("assets/Wallpaper_2.png")
+                texture: new Texture("assets/Wallpaper_3.jpg")
             }),
             window_texture: new Material (new Textured_Phong(), {
                 color: hex_color ("#000000"),
