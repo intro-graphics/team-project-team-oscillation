@@ -6,16 +6,16 @@ const {
 
 const {Textured_Phong} = defs
 
-let k = 0.3;
-let positionY = 7.7777;
-let anchorY = 5;
-let mass = 1.38;//0.84,1,1.15,1.27,1.38
-let gravity = 1;
-let velocityY = 0;
-let springForceY = 0;
-let forceY = 0;
-let accelerationY = 0;
-let d = 1/100;
+const k = 0.3;
+//let positionY = 7.7777;
+const anchorY = 5;
+//let mass = 1.38;//0.84,1,1.15,1.27,1.38
+const gravity = 1;
+//let velocityY = 0;
+//let springForceY = 0;
+//let forceY = 0;
+//let accelerationY = 0;
+//let d = 1/100;
 const DAMPING=0.01;
 const DAMPING2 = 0.2;
 const TIME_STEPSIZE2 = 0.5*0.5;
@@ -461,8 +461,11 @@ export class Spring_Scene extends Scene {
             text: new Text_Line(35),
             wood:new  defs.Square(),
             wall: new defs.Square(),
-            half_circle1: new defs.half_circle(15,15,12),
-            half_circle2: new defs.half_circle(15,15,10),
+            half_circle1: new defs.half_circle(15,15,12,2/3),//架子上的
+            half_circle2: new defs.half_circle(15,15,10,2/3),//弹簧上的
+            half_circle3: new defs.half_circle(15,15,24,1/4),//重物上的
+
+
 
 
         };
@@ -542,6 +545,25 @@ export class Spring_Scene extends Scene {
         this.close = false;
         this.log = 1.21;
 
+
+        this.positionY = 7.7777;
+        this.mass = 0.84;//0.84,1,1.15,1.27,1.38
+        this.velocityY = 0;
+        this.springForceY = 0;
+        this.forceY = 0;
+        this.accelerationY = 0;
+        this.d = 1/100;
+
+        this.weight1 = false;
+        this.weight2 = false;
+        this.weight3 = false;
+        this.weight4 = false;
+
+
+
+
+
+
     }
 
         make_control_panel() {
@@ -559,6 +581,32 @@ export class Spring_Scene extends Scene {
                 this.close = true;
                 this.open = false;
             });*/
+
+            this.new_line();
+            this.key_triggered_button("w1",  ["q"],() => {
+                this.weight1 = !this.weight1;
+                this.weight2 = false;
+                this.weight3 = false;
+                this.weight4 = false;
+            });
+            this.key_triggered_button("w2", ["e"], () => {
+                this.weight1 = false;
+                this.weight2 = true;
+                this.weight3 = false;
+                this.weight4 = false;
+            });
+            this.key_triggered_button("w3",  ["r"],() => {
+                this.weight1 = false;
+                this.weight2 = false;
+                this.weight3 = true;
+                this.weight4 = false;
+            });
+            this.key_triggered_button("w4",  ["t"],() => {
+                this.weight1 = false;
+                this.weight2 = false;
+                this.weight3 = false;
+                this.weight4 = true;
+            });
 
         }
 
@@ -671,14 +719,14 @@ export class Spring_Scene extends Scene {
 
     }
 
-    draw_weight_1 (context,program_state) {
+    draw_weight_1 (context,program_state,transform) {
         let model_transform = Mat4.identity();
-        model_transform = model_transform.pre_multiply(Mat4.scale(0.5,0.5,0.5)).pre_multiply(Mat4.translation(-2,-4.3,-1));
+        model_transform = transform.times(model_transform.pre_multiply(Mat4.scale(0.3,0.3,0.3)).pre_multiply(Mat4.translation(-2,-4.3,-1)));
         this.shapes.cube.draw(context,program_state,model_transform,this.materials.weight1);
-        let strings = ["2kg",Text_Line.toString(), Text_Line.toString()];
-        let cube_side = Mat4.translation(-0.3,0,1.1);
-        this.shapes.text.set_string("2kg", context.context);
-        this.shapes.text.draw(context, program_state, model_transform.times(cube_side).times(Mat4.scale(.2, .2, .2)), this.text_image);
+        //let strings = ["2kg",Text_Line.toString(), Text_Line.toString()];
+        //let cube_side = Mat4.translation(-0.3,0,1.1);
+        //this.shapes.text.set_string("2kg", context.context);
+        //this.shapes.text.draw(context, program_state, model_transform.times(cube_side).times(Mat4.scale(.15, .15, .15)), this.text_image);
     }
 
     draw_weight_2 (context,program_state) {
@@ -758,32 +806,11 @@ export class Spring_Scene extends Scene {
 
         // TODO:  Fill in matrix operations and drawing code to draw the solar system scene (Requirements 3 and 4)
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
-        let model_transform = Mat4.identity();
 
-        //console.log(dt);
-        /*if(this.open && this.log>0.3)
-        {
-            this.shapes.cloth.open();
-            this.x = 0.97;
-            this.log = this.log * 0.97;
-        }
-        else if(this.open)
-        {
-            this.x = 1;
-            this.open = false;
-        }
-        if(this.close && this.log<1.21)
-        {
-            this.shapes.cloth.close();
-            this.x = 1.02;
-            this.log = this.log*1.02;
-        }
-        else if(this.close)
-        {
-            this.x = 1;
-            this.log = 1.21;
-            this.close = false;
-        }*/
+        let model_transform_w1 = Mat4.identity();
+        let half_circle_transform3 = Mat4.identity();//弹簧上的
+        half_circle_transform3 = half_circle_transform3.times(Mat4.translation(2.9,8.85 - this.positionY,1)).times(Mat4.rotation((1/2+1/12) * Math.PI,0,1,0));
+        let hook_transform1 = Mat4.identity();
 
         this.cloth_transform = this.cloth_transform.times(Mat4.scale(1,1,1));
 
@@ -793,30 +820,40 @@ export class Spring_Scene extends Scene {
         this.Cloth = Mat4.identity().times(Mat4.translation(-9.9,7.7,-4.8)).times(Mat4.scale(0.57,0.6,1)).times(Mat4.translation(-40,35, -140));
 
 
-        if(mass === 0)
+        if(!this.weight1 && !this.weight2 && !this.weight3 && !this.weight4)
         {
-            d = 1/180;
-        }
-        else
-        {
-        springForceY = -k*(positionY - anchorY);
-        forceY = springForceY + mass * gravity- DAMPING2 * velocityY;
-        accelerationY = forceY/mass;
+            this.mass = 0.84;
+            model_transform_w1 = Mat4.identity();
+            hook_transform1 = hook_transform1.times(Mat4.translation(-2,-4,-1)).times(Mat4.scale(1,1,1)).times(Mat4.rotation(Math.PI,1,0,0));
 
-        velocityY = velocityY + accelerationY * 4*dt;
-        positionY = positionY + velocityY * 4*dt;
-        //console.log(positionY);
-        d = (positionY-anchorY)/ 500;}
+        }
+        else if (this.weight1)
+        {
+            this.mass = 1.38;
+            model_transform_w1 = model_transform_w1.times(Mat4.translation(0,12 - this.positionY,0)).times(Mat4.translation(5,0,2));
+            hook_transform1  =  hook_transform1.times(Mat4.translation(0,8 - this.positionY,0)).times(Mat4.translation(3,0,1)).times(Mat4.rotation(Math.PI,1,0,0));;
+
+        }
+
+        this.springForceY = -k*(this.positionY - anchorY);
+        this.forceY = this.springForceY + this.mass * gravity- DAMPING2 * this.velocityY;
+        this.accelerationY = this.forceY/this.mass;
+
+        this.velocityY = this.velocityY + this.accelerationY * 4*dt;
+        this.positionY = this.positionY + this.velocityY * 4*dt;
+
+        this.d = (this.positionY-anchorY)/ 500;
+
 
         this.draw_desk(context,program_state);
         this.draw_clock(context,program_state);
         this.draw_platform(context,program_state);
-        this.draw_weight_1(context,program_state);
+        this.draw_weight_1(context,program_state,model_transform_w1);
         this.draw_weight_2(context,program_state);
         this.draw_weight_3(context,program_state);
         this.draw_wall(context,program_state);
 
-        this.shapes.spring.func(d);
+        this.shapes.spring.func(this.d);
         this.shapes.spring.draw(context, program_state, spring_model_transform, this.materials.phong);
         this.shapes.spring.copy_onto_graphics_card(context.context, ["position", "normal"], false);
         // this.shapes.spring.copy_onto_graphics_card(context.context, ["position", "normal"], false);
@@ -843,10 +880,11 @@ export class Spring_Scene extends Scene {
         this.shapes.cloth.copy_onto_graphics_card(context.context, ["position", "normal"], false);
         let half_circle_transform1 = Mat4.identity().times(Mat4.translation(3,4.9, 1,));
         let half_circle_transform2 = Mat4.identity().times(Mat4.translation(3,3.7, 1,)).times(Mat4.rotation( (1/2+1/12) * Math.PI,0,1,0)).times(Mat4.rotation(Math.PI,1,0,0));
+
         this.shapes.half_circle1.draw(context, program_state, half_circle_transform1, this.materials.phong2);
         this.shapes.half_circle2.draw(context, program_state, half_circle_transform2, this.materials.phong);
-
-
+        this.shapes.half_circle2.draw(context, program_state, half_circle_transform3, this.materials.phong);
+        this.shapes.half_circle3.draw(context, program_state, hook_transform1, this.materials.phong);
 
 
     }

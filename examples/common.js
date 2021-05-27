@@ -324,12 +324,6 @@ const Surface_Of_Revolution = defs.Surface_Of_Revolution =
     }
 const Surface_Of_Revolution_2 = defs.Surface_Of_Revolution_2 =
     class Surface_Of_Revolution_2 extends Grid_Patch {
-        // SURFACE OF REVOLUTION: Produce a curved "sheet" of triangles with rows and columns.
-        // Begin with an input array of points, defining a 1D path curving through 3D space --
-        // now let each such point be a row.  Sweep that whole curve around the Z axis in equal
-        // steps, stopping and storing new points along the way; let each step be a column. Now
-        // we have a flexible "generalized cylinder" spanning an area until total_curvature_angle.
-
 
         constructor(rows, columns, points, texture_coord_range, total_curvature_angle = Math.PI) {
 
@@ -339,33 +333,23 @@ const Surface_Of_Revolution_2 = defs.Surface_Of_Revolution_2 =
             super(rows, columns, row_operation, column_operation, texture_coord_range);
         }
     }
+/*const Surface_Of_Revolution_3 = defs.Surface_Of_Revolution_3 =
+    class Surface_Of_Revolution_3 extends Grid_Patch {
 
-const Helix = defs.Helix =
-    class Helix extends Grid_Patch {
+        constructor(rows, columns, points, texture_coord_range, total_curvature_angle = Math.PI) {
 
-        constructor(rows, columns, points, d, texture_coord_range, total_curvature_angle =  22 * Math.PI) {
+            const row_operation1 = i => Grid_Patch.sample_array(points, i),
+                column_operation1 = (j, p) => Mat4.rotation(total_curvature_angle / (2/3)*columns, 0, 0, 1).times(p.to4(1)).to3();
+            const row_operation2 = i => Grid_Patch.sample_array(points, i),
+                column_operation2 = (j, p) => Mat4.translation( 0, 2/(1/3)*columns, 0).times(p.to4(1)).to3();
 
-            let dis = 0;
-            let a = total_curvature_angle / columns;
-            let rotation = Matrix.of(
-                [Math.cos(a),0,Math.sin(a),0],
-                [0,1,0,-d],
-                [-Math.sin(a),0,Math.cos(a),0],
-                [0,0,0,1]
-            );
-            /*let rotation = Matrix.of(
-                [Math.cos(a),0,Math.sin(a),0],
-                [0,1,0,-dis],
-                [-Math.sin(a),0,Math.cos(a),0],
-                [0,0,0,1]
-            );*/
+            super(rows, (2/3)*columns, row_operation1, column_operation1, texture_coord_range);
+            super(rows, (1/3)*columns, row_operation2, column_operation2, texture_coord_range);
 
-            const row_operation = i => Grid_Patch.sample_array(points, i),
-                column_operation = (j, p) => rotation.times(p.to4(1)).to3();
-            super(rows, columns, row_operation, column_operation, texture_coord_range);
         }
+    }*/
 
-    }
+
 
 
 const Regular_2D_Polygon = defs.Regular_2D_Polygon =
@@ -411,11 +395,11 @@ const Torus = defs.Torus =
 
 const half_circle = defs.half_circle =
     class half_circle extends Shape{
-        constructor(rows, columns, r, texture_range)
+        constructor(rows, columns, r, R, texture_range)
         {
             super("position", "normal", "texture_coord");
             const circle_points = Array(rows).fill(vec3(1 / r, 0, 0))
-                .map((p, i, a) => Mat4.translation(-2 / 3, 0, 0)
+                .map((p, i, a) => Mat4.translation(-R, 0, 0)
                     .times(Mat4.rotation(i / (a.length - 1) * 2 * Math.PI, 0, -1, 0))
                     .times(Mat4.scale(1, 1, 3))
                     .times(p.to4(1)).to3());
@@ -423,8 +407,23 @@ const half_circle = defs.half_circle =
 
         }
 
-
     }
+/*const hook = defs.hook =
+    class hook extends Shape {
+        constructor(rows, columns, texture_range)
+        {
+            super("position", "normal", "texture_coord");
+            const circle_points = Array(rows).fill(vec3(1 / 15, 0, 0))
+                .map((p, i, a) => Mat4.translation(-2 / 3, 0, 0)
+                    .times(Mat4.rotation(i / (a.length - 1) * 2 * Math.PI, 0, -1, 0))
+                    .times(Mat4.scale(1, 1, 3))
+                    .times(p.to4(1)).to3());
+            Surface_Of_Revolution_3.insert_transformed_copy_into(this, [rows, columns, circle_points, texture_range]);
+        }
+
+    }*/
+
+
 const Spring = defs.Spring =
     class Spring extends Shape {
         // Build a donut shape.  An example of a surface of revolution.
@@ -441,7 +440,7 @@ const Spring = defs.Spring =
             this.r = rows;
             this.c = columns;
 
-            let a = 14.2 * Math.PI / this.c;
+            let a = 14 * Math.PI / this.c;
             let rotation = Matrix.of(
                 [Math.cos(a),0,Math.sin(a),0],
                 [0,1,0,-1/100],
@@ -511,7 +510,7 @@ const Spring = defs.Spring =
         {
             this.arrays.position=[];
             this.arrays.normal=[];
-            let a = 14.2 * Math.PI / this.c;
+            let a = 14 * Math.PI / this.c;
             let rotation = Matrix.of(
                 [Math.cos(a),0,Math.sin(a),0],
                 [0,1,0,-d],
