@@ -6,10 +6,10 @@ const {
 
 const {Textured_Phong} = defs
 
-let k = 1;
-let positionY = 10;
+let k = 0.3;
+let positionY = 7.7777;
 let anchorY = 5;
-let mass = 6.2;
+let mass = 1.38;//0.84,1,1.15,1.27,1.38
 let gravity = 1;
 let velocityY = 0;
 let springForceY = 0;
@@ -449,7 +449,6 @@ export class Spring_Scene extends Scene {
             torus: new defs.Torus(15, 15),
             torus2: new defs.Torus(35, 325),
 
-            //spring: (x) => new defs.Spring(15, 500, x),
 
             cloth: new cloth(13,11,50,45),
 
@@ -462,6 +461,9 @@ export class Spring_Scene extends Scene {
             text: new Text_Line(35),
             wood:new  defs.Square(),
             wall: new defs.Square(),
+            half_circle1: new defs.half_circle(15,15,12),
+            half_circle2: new defs.half_circle(15,15,10),
+
 
         };
         for (let i=0; i < this.shapes.wood.arrays.texture_coord.length;i++)
@@ -481,7 +483,7 @@ export class Spring_Scene extends Scene {
             // TODO:  Fill in as many additional material objects as needed in this key/value table.
             //        (Requirement 4)
             phong: new Material(new defs.Phong_Shader(),
-                {ambient: .4, diffusivity: .6, specularity: 1, smoothness: 40, color: hex_color("#910101")}),
+                {ambient: .5, diffusivity: .6, specularity: 1, smoothness: 40, color: hex_color("#910101")}),
             phong3:new Material(new defs.Phong_Shader(),
                 {ambient: .9, diffusivity: .2, specularity: 0, smoothness: 40, color: hex_color("#ddba8a")}),//#ddba8a
             gouraud: new Material(new Gouraud_Shader(),
@@ -786,11 +788,17 @@ export class Spring_Scene extends Scene {
         this.cloth_transform = this.cloth_transform.times(Mat4.scale(1,1,1));
 
         let spring_model_transform = Mat4.identity();
-        spring_model_transform = spring_model_transform.times(Mat4.translation(3,4.92, 0,))
-        this.Spring = spring_model_transform.times(Mat4.translation(30,30, -100));
+        spring_model_transform = spring_model_transform.times(Mat4.translation(2.94,3.76, 1.)).times(Mat4.rotation(1/12*Math.PI,0,1,0));//4.92
+        this.Spring = Mat4.translation(30,12, -130);
         this.Cloth = Mat4.identity().times(Mat4.translation(-9.9,7.7,-4.8)).times(Mat4.scale(0.57,0.6,1)).times(Mat4.translation(-40,35, -140));
 
 
+        if(mass === 0)
+        {
+            d = 1/180;
+        }
+        else
+        {
         springForceY = -k*(positionY - anchorY);
         forceY = springForceY + mass * gravity- DAMPING2 * velocityY;
         accelerationY = forceY/mass;
@@ -798,7 +806,7 @@ export class Spring_Scene extends Scene {
         velocityY = velocityY + accelerationY * 4*dt;
         positionY = positionY + velocityY * 4*dt;
         //console.log(positionY);
-        d = (positionY-anchorY)/ 500;
+        d = (positionY-anchorY)/ 500;}
 
         this.draw_desk(context,program_state);
         this.draw_clock(context,program_state);
@@ -831,11 +839,14 @@ export class Spring_Scene extends Scene {
 
         this.shapes.cloth.ddraw();
 
-       // this.shapes.cube.draw(context, program_state, model_transform, this.materials.phong);
         this.shapes.cloth.draw(context, program_state, this.cloth_transform, this.materials.phong2);
         this.shapes.cloth.copy_onto_graphics_card(context.context, ["position", "normal"], false);
+        let half_circle_transform1 = Mat4.identity().times(Mat4.translation(3,4.9, 1,));
+        let half_circle_transform2 = Mat4.identity().times(Mat4.translation(3,3.7, 1,)).times(Mat4.rotation( (1/2+1/12) * Math.PI,0,1,0)).times(Mat4.rotation(Math.PI,1,0,0));
+        this.shapes.half_circle1.draw(context, program_state, half_circle_transform1, this.materials.phong2);
+        this.shapes.half_circle2.draw(context, program_state, half_circle_transform2, this.materials.phong);
 
-        //this.shapes.cube.draw(context,program_state,Mat4.identity(),this.materials.wood);
+
 
 
     }
