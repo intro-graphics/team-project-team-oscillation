@@ -439,6 +439,7 @@ export class Spring_Scene extends Scene {
         // constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
         super();
 
+
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
         this.shapes = {
             sphere1: new defs.Subdivision_Sphere(3),
@@ -464,9 +465,6 @@ export class Spring_Scene extends Scene {
             half_circle1: new defs.half_circle(15,15,12,2/3),//架子上的
             half_circle2: new defs.half_circle(15,15,10,2/3),//弹簧上的
             half_circle3: new defs.half_circle(15,15,24,1/4),//重物上的
-
-
-
 
         };
         for (let i=0; i < this.shapes.wood.arrays.texture_coord.length;i++)
@@ -559,9 +557,14 @@ export class Spring_Scene extends Scene {
         this.weight3 = false;
         this.weight4 = false;
 
+        this.loc_weight1 = vec3(0,0,0);
+        this.loc_weight2 = vec3(0,0,0);
+        this.loc_weight3 = vec3(0,0,0);
+        this.r1 = 0.3;
+        this.r2 = 0.7;
+        this.r3 = 0.4;
 
-
-
+        this.mouse_scene = new defs.Movement_Controls();
 
 
     }
@@ -608,7 +611,75 @@ export class Spring_Scene extends Scene {
                 this.weight4 = true;
             });
 
+
         }
+
+    get_ray (context,program_state,vec2_view) {
+        let clip = vec4(vec2_view[0],vec2_view[1],-1.0,1.0);
+        console.log(clip);
+        let invProjec = Mat4.inverse(program_state.projection_transform);
+        let eyeCoord = invProjec.times(clip);
+        eyeCoord = vec4(eyeCoord[0],eyeCoord[1],-1.0,0.0);
+        let cam_mat = program_state.camera_transform;
+        let rayWorld = cam_mat.times(eyeCoord);
+        let rayWorld_vec = rayWorld.to3();
+        return rayWorld_vec;
+    }
+
+    intersection_ray_1 (context, program_state, rayIn) {
+        let z_coord = this.loc_weight1[2] + this.r1;
+        console.log(z_coord);
+        let invView = program_state.camera_transform;
+        let camera_position = vec3(invView[0][3], invView[1][3], invView[2][3]);
+
+        let t = (z_coord - camera_position[2])/(rayIn[2]);
+        let x_zplane = camera_position[0] + t*rayIn[0];
+        let y_zplane = camera_position[1] + t*rayIn[1];
+        console.log(vec4(x_zplane,y_zplane,z_coord,1.0));
+
+        return vec4(x_zplane,y_zplane,z_coord,1.0);
+    }
+
+    drag_object1(context,program_state) {
+        let model_transform = Mat4.identity();
+        model_transform = model_transform.pre_multiply(Mat4.scale(this.r1,this.r1,this.r1)).pre_multiply(Mat4.translation(-2,-4.3,1));
+        if (this.mouse_scene.movem) {
+            let vec2_view = this.mouse_scene.mouse.anchor;
+            let ray_anchor = this.get_ray(context,program_state,vec2_view);
+            let intersect_anchor = this.intersection_ray_1(context,program_state,ray_anchor);
+            console.log(intersect_anchor);
+            let lambda = 0.05;
+            if (intersect_anchor[0] >= this.loc_weight1[0] - this.r1 - lambda && 
+                intersect_anchor[0] <= this.loc_weight1[0] + this.r1 + lambda &&
+                intersect_anchor[1] >= this.loc_weight1[1] - this.r1 - lambda && 
+                intersect_anchor[1] <= this.loc_weight1[1] + this.r1 + lambda) {
+                    let ray_cur = this.get_ray(context,program_state,this.mouse_scene.mouse.from_center);
+                    let intersect_cur = this.intersection_ray_1(context,program_state,ray_cur);
+                    const x_diff = intersect_cur[0] - intersect_anchor[0];
+                    const y_diff = intersect_cur[1] - intersect_anchor[1];
+                    model_transform = model_transform.pre_multiply(Mat4.translation(x_diff,y_diff,0));
+                    this.shapes.cube.draw(context,program_state,model_transform,this.materials.weight1);
+                }
+        }
+        //else if (this.mouse_scene.freeze) {
+            //let ray_cur = this.get_ray(context,program_state,this.mouse_scene.mouse.from_center);
+            //let intersect_cur = this.intersection_ray_1(context,program_state,ray_cur);
+
+        //}
+
+
+
+        else {
+            this.shapes.cube.draw(context,program_state,model_transform,this.materials.weight1);
+            this.loc_weight1 = model_transform.times(vec(0,0,0,1));
+            this.weight1 = false;
+        }
+
+ 
+
+    }
+
+
 
     draw_desk (context,program_state) {
         let plat_transform = Mat4.identity();
@@ -721,7 +792,8 @@ export class Spring_Scene extends Scene {
 
     draw_weight_1 (context,program_state,transform) {
         let model_transform = Mat4.identity();
-        model_transform = transform.times(model_transform.pre_multiply(Mat4.scale(0.3,0.3,0.3)).pre_multiply(Mat4.translation(-2,-4.3,-1)));
+        model_transform = transform.times(model_transform.pre_multiply(Mat4.scale(this.r1,this.r1,this.r1)).pre_multiply(Mat4.translation(-2,-4.3,1)));
+        this.loc_weight1 = (model_transform.times(vec4(0,0,0,1))).xyz; 
         this.shapes.cube.draw(context,program_state,model_transform,this.materials.weight1);
         //let strings = ["2kg",Text_Line.toString(), Text_Line.toString()];
         //let cube_side = Mat4.translation(-0.3,0,1.1);
@@ -731,7 +803,8 @@ export class Spring_Scene extends Scene {
 
     draw_weight_2 (context,program_state) {
         let model_transform = Mat4.identity();
-        model_transform = model_transform.pre_multiply(Mat4.scale(0.7,0.7,0.7)).pre_multiply(Mat4.translation(-4,-4.1,-0.6));
+        model_transform = model_transform.pre_multiply(Mat4.scale(this.r2,this.r2,this.r2)).pre_multiply(Mat4.translation(-4,-4.1,1));
+        this.loc_weight2 = (model_transform.times(vec4(0,0,0,1))).xyz; 
         this.shapes.cube.draw(context,program_state,model_transform,this.materials.weight1);
         //let strings = ["1.5kg",Text_Line.toString(), Text_Line.toString()];
         let cube_side = Mat4.translation(-0.5,0,1.1);
@@ -741,8 +814,9 @@ export class Spring_Scene extends Scene {
 
     draw_weight_3 (context,program_state) {
         let model_transform = Mat4.identity();
-        model_transform = model_transform.pre_multiply(Mat4.scale(0.4,0.4,0.4)).pre_multiply(Mat4.translation(-5.6,-4.4,0.8));
+        model_transform = model_transform.pre_multiply(Mat4.scale(this.r3,this.r3,this.r3)).pre_multiply(Mat4.translation(-5.6,-4.4,1));
         this.shapes.cube.draw(context,program_state,model_transform,this.materials.weight1);
+        this.loc_weight3 = (model_transform.times(vec4(0,0,0,1))).xyz; 
         //let strings = ["1.5kg",Text_Line.toString(), Text_Line.toString()];
         let cube_side = Mat4.translation(-0.28,0,1.1);
         this.shapes.text.set_string("1kg", context.context);
@@ -780,7 +854,7 @@ export class Spring_Scene extends Scene {
         // display():  Called once per frame of animation.
         // Setup -- This part sets up the scene's overall camera matrix, projection matrix, and lights:
         if (!context.scratchpad.controls) {
-            this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
+            this.children.push(context.scratchpad.controls = this.mouse_scene);
             // Define the global camera and projection matrices, which are stored in program_state.
             program_state.set_camera(this.initial_camera_location);
         }
@@ -788,7 +862,6 @@ export class Spring_Scene extends Scene {
 
         program_state.projection_transform = Mat4.perspective(
             Math.PI/4, context.width / context.height, .1, 1000);
-
 
         if (this.attached !== undefined) {
             let desired = Mat4.inverse(this.attached().times(Mat4.translation(0,0,-5)));
@@ -824,14 +897,15 @@ export class Spring_Scene extends Scene {
         {
             this.mass = 0.84;
             model_transform_w1 = Mat4.identity();
-            hook_transform1 = hook_transform1.times(Mat4.translation(-2,-4,-1)).times(Mat4.scale(1,1,1)).times(Mat4.rotation(Math.PI,1,0,0));
+            hook_transform1 = hook_transform1.times(Mat4.translation(-2,-4,1)).times(Mat4.scale(1,1,1)).times(Mat4.rotation(Math.PI,1,0,0));
 
         }
         else if (this.weight1)
         {
             this.mass = 1.38;
             model_transform_w1 = model_transform_w1.times(Mat4.translation(0,12 - this.positionY,0)).times(Mat4.translation(5,0,2));
-            hook_transform1  =  hook_transform1.times(Mat4.translation(0,8 - this.positionY,0)).times(Mat4.translation(3,0,1)).times(Mat4.rotation(Math.PI,1,0,0));;
+            hook_transform1  =  hook_transform1.times(Mat4.translation(0,8 - this.positionY,0)).times(Mat4.translation(3,0,1)).times(Mat4.rotation(Math.PI,1,0,0));
+            this.draw_weight_1(context,program_state,model_transform_w1);
 
         }
 
@@ -848,14 +922,21 @@ export class Spring_Scene extends Scene {
         this.draw_desk(context,program_state);
         this.draw_clock(context,program_state);
         this.draw_platform(context,program_state);
-        this.draw_weight_1(context,program_state,model_transform_w1);
-        this.draw_weight_2(context,program_state);
-        this.draw_weight_3(context,program_state);
+
+
+
+        this.drag_object1(context,program_state);
+        
+        //this.draw_weight_2(context,program_state);
+        //this.draw_weight_3(context,program_state);
         this.draw_wall(context,program_state);
 
         this.shapes.spring.func(this.d);
         this.shapes.spring.draw(context, program_state, spring_model_transform, this.materials.phong);
         this.shapes.spring.copy_onto_graphics_card(context.context, ["position", "normal"], false);
+
+
+
         // this.shapes.spring.copy_onto_graphics_card(context.context, ["position", "normal"], false);
 
         //this.shapes.spring.override({dis:d}).draw(context, program_state, model_transform, this.materials.phong);

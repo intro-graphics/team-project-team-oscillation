@@ -1045,6 +1045,9 @@ const Movement_Controls = defs.Movement_Controls =
 
             this.mouse_enabled_canvases = new Set();
             this.will_take_over_graphics_state = true;
+            this.mouse = {"from_center": vec(0, 0)};
+            this.movem = false;
+            this.freeze = false;
         }
 
         set_recipient(matrix_closure, inverse_closure) {
@@ -1065,23 +1068,35 @@ const Movement_Controls = defs.Movement_Controls =
         add_mouse_controls(canvas) {
             // add_mouse_controls():  Attach HTML mouse events to the drawing canvas.
             // First, measure mouse steering, for rotating the flyaround camera:
-            this.mouse = {"from_center": vec(0, 0)};
+            //this.mouse = {"from_center": vec(0, 0)};
             const mouse_position = (e, rect = canvas.getBoundingClientRect()) =>
-                vec(e.clientX - (rect.left + rect.right) / 2, e.clientY - (rect.bottom + rect.top) / 2);
+                vec((e.clientX - (rect.left + rect.right) / 2)*2/(rect.right - rect.left), 
+                (e.clientY - (rect.bottom + rect.top) / 2)*2/(rect.top - rect.bottom));
             // Set up mouse response.  The last one stops us from reacting if the mouse leaves the canvas:
             document.addEventListener("mouseup", e => {
-                this.mouse.anchor = undefined;
+                //this.mouse.anchor = undefined;
+                this.movem = false;
+                this.freeze = true;
+                this.mouse.from_center = mouse_position(e);
             });
             canvas.addEventListener("mousedown", e => {
                 e.preventDefault();
+                this.movem = true;
+                this.freeze = false;
                 this.mouse.anchor = mouse_position(e);
+                this.mouse.from_center = mouse_position(e);
+                this.mouse_pos = mouse_position(e);
             });
             canvas.addEventListener("mousemove", e => {
                 e.preventDefault();
+                this.mouse_pos = mouse_position(e);
                 this.mouse.from_center = mouse_position(e);
             });
             canvas.addEventListener("mouseout", e => {
-                if (!this.mouse.anchor) this.mouse.from_center.scale_by(0)
+                if (!this.mouse.anchor) {
+                    //this.mouse.from_center.scale_by(0);
+                    this.movem = false;
+                }
             });
         }
 
@@ -1200,6 +1215,7 @@ const Movement_Controls = defs.Movement_Controls =
             this.inverse().pre_multiply(Mat4.translation(0, 0, -25));
         }
 
+
         display(context, graphics_state, dt = graphics_state.animation_delta_time / 1000) {
             // The whole process of acting upon controls begins here.
             const m = this.speed_multiplier * this.meters_per_frame,
@@ -1214,14 +1230,19 @@ const Movement_Controls = defs.Movement_Controls =
                 this.add_mouse_controls(context.canvas);
                 this.mouse_enabled_canvases.add(context.canvas)
             }
+
+            
+
+
+
             // Move in first-person.  Scale the normal camera aiming speed by dt for smoothness:
-            this.first_person_flyaround(dt * r, dt * m);
+            //this.first_person_flyaround(dt * r, dt * m);
             // Also apply third-person "arcball" camera mode if a mouse drag is occurring:
-            if (this.mouse.anchor)
-                this.third_person_arcball(dt * r);
+            //if (this.mouse.anchor)
+                //this.third_person_arcball(dt * r);
             // Log some values:
-            this.pos = this.inverse().times(vec4(0, 0, 0, 1));
-            this.z_axis = this.inverse().times(vec4(0, 0, 1, 0));
+            //this.pos = this.inverse().times(vec4(0, 0, 0, 1));
+            //this.z_axis = this.inverse().times(vec4(0, 0, 1, 0));
         }
     }
 
