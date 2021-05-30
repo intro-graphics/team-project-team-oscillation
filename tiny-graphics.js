@@ -1269,7 +1269,8 @@ const Program_State = tiny.Program_State = class Program_State extends Container
             projection_transform,
             animate: true,
             animation_time: 0,
-            animation_delta_time: 0
+            animation_delta_time: 0,
+            inv_projection: Mat4.identity(),
         };
         Object.assign(this, defaults);
     }
