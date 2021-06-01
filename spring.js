@@ -465,6 +465,7 @@ export class Spring_Scene extends Scene {
             half_circle1: new defs.half_circle(15,15,12,2/3),//架子上的
             half_circle2: new defs.half_circle(15,15,10,2/3),//弹簧上的
             half_circle3: new defs.half_circle(15,15,24,1/4),//重物上的
+            passcode:new defs.Square(),
 
         };
         for (let i=0; i < this.shapes.wood.arrays.texture_coord.length;i++)
@@ -485,7 +486,7 @@ export class Spring_Scene extends Scene {
             //        (Requirement 4)
             phong: new Material(new defs.Phong_Shader(),
                 {ambient: .5, diffusivity: .6, specularity: 1, smoothness: 40, color: hex_color("#910101")}),
-            phong3:new Material(new defs.Phong_Shader(),
+            phong3: new Material(new defs.Phong_Shader(),
                 {ambient: .9, diffusivity: .2, specularity: 0, smoothness: 40, color: hex_color("#ddba8a")}),//#ddba8a
             gouraud: new Material(new Gouraud_Shader(),
                 {ambient: .4, diffusivity: .6, specularity: .8, smoothness: 40, color: hex_color("#fff53e")}),
@@ -494,39 +495,51 @@ export class Spring_Scene extends Scene {
             phong2: new Material(new defs.Phong_Shader(),
                 {ambient: .8, diffusivity: .5, specularity: 0, smoothness: 40, color: hex_color("#b9a081")}),
 
-            leg: new Material (new defs.Phong_Shader(),
-            {ambient: .9, diffusivity: .6, specularity: 1, color: hex_color ("#c0b284")}),
-            paper: new Material (new defs.Phong_Shader(),
-            {ambient: .9, diffusivity: .6, specularity: .1, color: hex_color ("#ffffff")}),
-            second: new Material (new defs.Phong_Shader(),
-            {ambient: .6, diffusivity: .6, specularity: .1, color: hex_color ("#d1642e")}),
-            minute: new Material (new defs.Phong_Shader(),
-            {ambient: .6, diffusivity: .6, specularity: .1, color: hex_color ("#000000")}),
-            hour: new Material (new defs.Phong_Shader(),
-            {ambient: .6, diffusivity: .6, specularity: .1, color: hex_color ("#326ba8")}),
-            clock: new Material (new defs.Phong_Shader(),
-            {ambient:.5,diffusivity:.6, specularity: .1, color: hex_color ("#C0C0C0")}),
-            weight1: new Material (new defs.Phong_Shader(),
-            {ambient:.3,diffusivity:.6,specularity:.1,color: hex_color ("#6e9fd4")}),
-            wood1: new Material (new Textured_Phong(), {
-                color: hex_color ("#000000"),
+            leg: new Material(new defs.Phong_Shader(),
+                {ambient: .9, diffusivity: .6, specularity: 1, color: hex_color("#c0b284")}),
+            paper: new Material(new defs.Phong_Shader(),
+                {ambient: .9, diffusivity: .6, specularity: .1, color: hex_color("#ffffff")}),
+            second: new Material(new defs.Phong_Shader(),
+                {ambient: .6, diffusivity: .6, specularity: .1, color: hex_color("#d1642e")}),
+            minute: new Material(new defs.Phong_Shader(),
+                {ambient: .6, diffusivity: .6, specularity: .1, color: hex_color("#000000")}),
+            hour: new Material(new defs.Phong_Shader(),
+                {ambient: .6, diffusivity: .6, specularity: .1, color: hex_color("#326ba8")}),
+            clock: new Material(new defs.Phong_Shader(),
+                {ambient: .5, diffusivity: .6, specularity: .1, color: hex_color("#C0C0C0")}),
+            weight1: new Material(new defs.Phong_Shader(),
+                {ambient: .3, diffusivity: .6, specularity: .1, color: hex_color("#6e9fd4")}),
+            wood1: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"),
                 ambient: 1.0, diffusivity: 0.1, specularity: 1,
                 texture: new Texture("assets/wood_new_5.png")
             }),
-            wall_texture: new Material (new Textured_Phong(), {
-                color: hex_color ("#000000"),
+            wall_texture: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"),
                 ambient: .9, diffusivity: 0.1, specularity: 0.1,
-                texture: new Texture("assets/Wallpaper_3.jpg")
+                texture: new Texture("assets/Wallpaper_5.png")
             }),
-            wall_texture2: new Material (new Textured_Phong(), {
-                color: hex_color ("#000000"),
+            wall_texture2: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"),
                 ambient: .95, diffusivity: 0.1, specularity: 0.1,
                 texture: new Texture("assets/Wallpaper_3.jpg")
             }),
-            window_texture: new Material (new Textured_Phong(), {
-                color: hex_color ("#000000"),
+            wall_texture3: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: .95, diffusivity: 0.1, specularity: 0.1,
+                texture: new Texture("assets/Wallpaper_4.png")
+            }),
+            window_texture: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"),
                 ambient: 1.0, diffusivity: 0.1, specularity: 0.1,
-                texture: new Texture("assets/window_view.png")
+                texture: new Texture("assets/window_new.png")
+            }),
+
+            passcode_texture: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: .95, diffusivity: 0.1, specularity: 0.1,
+                texture: new Texture("assets/password.png")
+
             }),
 
         }
@@ -578,6 +591,9 @@ export class Spring_Scene extends Scene {
         this.mouse_scene = new defs.Movement_Controls();
 
 
+        this.passcode = false;
+
+
     }
 
         make_control_panel() {
@@ -591,12 +607,9 @@ export class Spring_Scene extends Scene {
                 this.open = true;
                 //this.close = false;
             });
-            /*this.key_triggered_button("close", ["c"], () => {
-                this.close = true;
-                this.open = false;
-            });*/
-
-            this.new_line();
+            this.key_triggered_button("password", ["p"], () => {
+                this.passcode = !this.passcode;
+            });
 
             /*
             this.key_triggered_button("w1",  ["q"],() => {
@@ -1003,7 +1016,7 @@ export class Spring_Scene extends Scene {
         let left = Mat4.identity();
         left = left.pre_multiply(Mat4.rotation(Math.PI/2,0,1,0)).pre_multiply(Mat4.scale(15,15,15))
         .pre_multiply(Mat4.translation(-15,0,0));
-        this.shapes.wall.draw(context,program_state,left,this.materials.wall_texture);
+        this.shapes.wall.draw(context,program_state,left,this.materials.wall_texture3);
 
         let right = Mat4.identity();
         right = right.pre_multiply(Mat4.rotation(Math.PI/2,0,1,0)).pre_multiply(Mat4.scale(15,15,15))
@@ -1015,6 +1028,12 @@ export class Spring_Scene extends Scene {
         this.shapes.square.draw(context,program_state,window,this.materials.window_texture);      
 
     }
+     draw_passcode(context,program_state)
+     {
+         let transform = Mat4.identity();
+         transform = transform.times(Mat4.translation(0,1,20)).times(Mat4.scale(3,3,3));
+         this.shapes.passcode.draw(context,program_state,transform,this.materials.passcode_texture);
+     }
 
 
     display(context, program_state) {
@@ -1060,7 +1079,6 @@ export class Spring_Scene extends Scene {
         spring_model_transform = spring_model_transform.times(Mat4.translation(2.94,3.76, 1.)).times(Mat4.rotation(1/12*Math.PI,0,1,0));//4.92
         this.Spring = Mat4.translation(30,12, -130);
         this.Cloth = Mat4.identity().times(Mat4.translation(-9.9,7.7,-4.8)).times(Mat4.scale(0.57,0.6,1)).times(Mat4.translation(-40,35, -140));
-
 
         if(!this.weight1 && !this.weight2 && !this.weight3 && !this.weight4)
         {
@@ -1128,26 +1146,20 @@ export class Spring_Scene extends Scene {
         this.shapes.spring.copy_onto_graphics_card(context.context, ["position", "normal"], false);
 
 
-
-        // this.shapes.spring.copy_onto_graphics_card(context.context, ["position", "normal"], false);
-
-        //this.shapes.spring.override({dis:d}).draw(context, program_state, model_transform, this.materials.phong);
-
-        //this.shapes.cloth.addforce(vec3(0,-0.2,0.02).times(TIME_STEPSIZE2));
         if(this.open)
         {
             this.shapes.cloth.addforce(vec3(0,-0.25,0.01).times(TIME_STEPSIZE2));
-            this.shapes.cloth.windForce(vec3(0,0,1.1).times(TIME_STEPSIZE2));
+            this.shapes.cloth.windForce(vec3(0,0,1.2).times(TIME_STEPSIZE2));
         }
         else
         {
             this.shapes.cloth.addforce(vec3(0,-0.2,0.02).times(TIME_STEPSIZE2));
         }
 
-        //this.shapes.cloth.collision();
+
         this.shapes.cloth.timestep();
 
-        //this.shapes.cloth.ddraw();
+        this.shapes.cloth.ddraw();
 
         this.shapes.cloth.draw(context, program_state, this.cloth_transform, this.materials.phong2);
         this.shapes.cloth.copy_onto_graphics_card(context.context, ["position", "normal"], false);
@@ -1159,6 +1171,8 @@ export class Spring_Scene extends Scene {
         this.shapes.half_circle2.draw(context, program_state, half_circle_transform3, this.materials.phong);
         //this.shapes.half_circle3.draw(context, program_state, hook_transform1, this.materials.phong);
 
+
+        if(this.passcode) {this.draw_passcode(context,program_state);}
 
     }
 }
