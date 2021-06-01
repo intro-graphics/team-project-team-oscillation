@@ -551,6 +551,18 @@ export class Spring_Scene extends Scene {
 
             }),
 
+            poster_texture: new Material (new Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: .95, diffusivity: 0.1, specularity: 0.1,
+                texture: new Texture("assets/poster_new.png")
+            }),
+
+            congrat_texture: new Material (new Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: .95, diffusivity: 0.1, specularity: 0.1,
+                texture: new Texture("assets/congratulation_sh3.png")
+            }),
+
         }
 
         this.initial_camera_location = Mat4.look_at(vec3(0, 2, 30), vec3(0, -0.2, 0), vec3(0, 4, 0));
@@ -612,6 +624,16 @@ export class Spring_Scene extends Scene {
 
 
         this.passcode = false;
+        this.passcode_finished = false;
+        this.passcode_str = "";
+        this.passcode_answer = ""; // need the correct passcode here
+        this.passcode_x = [0, -2,0,2,-2,0,2,-2,0,2,-2,2];
+        this.passcode_y = [-1.25, 0.25, 0.25,0.25,1.75,1.75,1.75,3.25,3.25,3.25,-1.25,-1.25];
+        this.letters = ["0","1","2","3","4","5","6","7","8","9","*","#"];
+
+
+        this.poster_view = false;
+
 
 
     }
@@ -627,9 +649,9 @@ export class Spring_Scene extends Scene {
                 this.open = true;
                 //this.close = false;
             });
-            this.key_triggered_button("password", ["p"], () => {
-                this.passcode = !this.passcode;
-            });
+            //this.key_triggered_button("password", ["p"], () => {
+                //this.passcode = !this.passcode;
+            //});
 
             this.key_triggered_button("w2", ["p"], () => {
 
@@ -717,24 +739,49 @@ export class Spring_Scene extends Scene {
         return vec4(x_zplane,y_zplane,z_coord,1.0);
     }
 
-    intersection_ray_2 (context,program_state,rayIn) {
-        let z_coord = this.loc_weight2[2] + this.r2;
+    intersection_ray_password (context,program_state, rayIn) {
+        if (!this.passcode) {
+            return;
+        }
+        let z_coord = 20;
         let invView = program_state.camera_transform;
         let camera_position = vec3(invView[0][3], invView[1][3], invView[2][3]);
         let t = (z_coord - camera_position[2])/(rayIn[2]);
         let x_zplane = camera_position[0] + t*rayIn[0];
         let y_zplane = camera_position[1] + t*rayIn[1];
-        return vec4(x_zplane,y_zplane,z_coord,1.0);
+        return vec4(x_zplane,y_zplane,z_coord,1);
     }
 
-    intersection_ray_3 (context,program_state,rayIn) {
-        let z_coord = this.loc_weight3[2] + this.r3;
+    intersection_ray_poster (context,program_state,rayIn) {
+        let x_coord = -15;
+        let invView = program_state.camera_transform;
+        let camera_position = vec3(invView[0][3], invView[1][3], invView[2][3]);
+        let t = (x_coord - camera_position[0])/(rayIn[0]);
+        let y_xplane = camera_position[1] + t*rayIn[1];
+        let z_xplane = camera_position[2] + t*rayIn[2];
+        return vec4(x_coord,y_xplane,z_xplane,1);
+    }
+
+    intersection_ray_door (context,program_state,rayIn) {
+        let x_coord = 15;
+        let invView = program_state.camera_transform;
+        let camera_position = vec3(invView[0][3], invView[1][3], invView[2][3]);
+        let t = (x_coord - camera_position[0])/(rayIn[0]);
+        let y_xplane = camera_position[1] + t*rayIn[1];
+        let z_xplane = camera_position[2] + t*rayIn[2];
+        return vec4(x_coord,y_xplane,z_xplane,1);
+    }
+
+
+
+    intersection_ray_demonstrate (context,program_state,rayIn) {
+        let z_coord = 17;
         let invView = program_state.camera_transform;
         let camera_position = vec3(invView[0][3], invView[1][3], invView[2][3]);
         let t = (z_coord - camera_position[2])/(rayIn[2]);
         let x_zplane = camera_position[0] + t*rayIn[0];
         let y_zplane = camera_position[1] + t*rayIn[1];
-        return vec4(x_zplane,y_zplane,z_coord,1.0);
+        return vec4(x_zplane,y_zplane,z_coord,1);
     }
 
 
@@ -747,23 +794,6 @@ export class Spring_Scene extends Scene {
         }
     }
 
-     update_anchor_2 (context,program_state) {
-        if (this.anchor2 == undefined) {
-            let vec2_view = this.mouse_scene.mouse.anchor;
-            let ray_anchor = this.get_ray(context,program_state,vec2_view);
-            let intersect_anchor = this.intersection_ray_2(context,program_state,ray_anchor);
-            this.anchor2 = intersect_anchor;
-        }
-    }
-
-     update_anchor_3 (context,program_state) {
-        if (this.anchor3 == undefined) {
-            let vec2_view = this.mouse_scene.mouse.anchor;
-            let ray_anchor = this.get_ray(context,program_state,vec2_view);
-            let intersect_anchor = this.intersection_ray_3(context,program_state,ray_anchor);
-            this.anchor3 = intersect_anchor;
-        }
-    }
 
     check_intersect_1(lambda, intersect_anchor) {
         if (intersect_anchor[0] >= this.loc_weight1[0] - this.r1 - lambda && 
@@ -776,17 +806,119 @@ export class Spring_Scene extends Scene {
                 return false;
             }
         
+    } 
+
+    check_intersect_passcode (intersect) {
+        let lambda = 0.7;
+        var i;
+        for (i = 0; i <= 11; i ++) {
+            if (intersect[0] >= this.passcode_x[i] - lambda &&
+                intersect[0] <= this.passcode_x[i] + lambda &&
+                intersect[1] >= this.passcode_y[i] - lambda &&
+                intersect[1] <= this.passcode_y[i] + lambda) {
+                    return i;
+                }
+        }
+
+        return undefined;
     }
 
-   check_intersect_2(lambda, intersect_anchor) {
-        if (intersect_anchor[0] >= this.loc_weight2[0] - this.r2 - lambda && 
-            intersect_anchor[0] <= this.loc_weight2[0] + this.r2 + lambda &&
-            intersect_anchor[1] >= this.loc_weight2[1] - this.r2 - lambda && 
-            intersect_anchor[1] <= this.loc_weight2[1] + this.r2 + lambda) {
+    check_intersect_poster (intersect) {
+        if (intersect[1] >= -3.5 && intersect[1] <= 8.5 &&
+            intersect[2] >= -4 && intersect[2] <= 5.5) {
                 return true;
             }
         return false;
     }
+
+    check_intersect_demonstrate (intersect) {
+        if (intersect[0] >= -3 && intersect[0] <= 3 &&
+            intersect[1] >= -2 && intersect[1] <= 4) {
+                return true;
+            }
+        return false;
+    }
+
+    check_intersect_door (intersect) {
+        if (intersect[1] >= -6 && intersect[2] >= -5 && intersect[2] <= 6) {
+            return true;
+        }
+        return false;
+    }
+
+    push_password(context,program_state) {
+        if (this.passcode && this.mouse_scene.movem) {
+            let vec2_view = this.mouse_scene.mouse.anchor;    
+            let ray_code = this.get_ray(context,program_state,vec2_view);
+            let intersect = this.intersection_ray_password(context,program_state,ray_code);
+            let code_correspond = this.check_intersect_passcode(intersect);
+            if (code_correspond == undefined) {
+                return;
+            }
+            if (code_correspond == 11) {
+                this.passcode = false;
+                this.passcode_finished = true;
+                this.move_index = 0;
+                return;
+            }
+            this.passcode_str += this.letters[code_correspond];
+            console.log(this.passcode_str)
+        }
+    }
+
+    click_door (context,program_state) {
+        if (this.mouse_scene.movem && !this.passcode) {
+            let vec2_view = this.mouse_scene.mouse.anchor;    
+            let ray_code = this.get_ray(context,program_state,vec2_view);
+            let intersect = this.intersection_ray_door(context,program_state,ray_code);
+            if (this.check_intersect_door(intersect)) {
+                this.passcode = true;
+            }
+        }
+
+        else if (this.mouse_scene.movem && this.passcode) {
+            let vec2_view = this.mouse_scene.mouse.anchor;    
+            let ray_code = this.get_ray(context,program_state,vec2_view);
+            let intersect = this.intersection_ray_demonstrate(context,program_state,ray_code);
+            if (!this.check_intersect_demonstrate(intersect)) {
+                this.passcode = false;
+                this.move_index = 0;
+                this.passcode_finished = true;
+            }
+        }
+
+
+    }
+
+    magnify_poster (context,program_state) {
+        if (this.mouse_scene.movem && !this.poster_view) {
+            let vec2_view = this.mouse_scene.mouse.anchor;    
+            let ray_code = this.get_ray(context,program_state,vec2_view);
+            let intersect = this.intersection_ray_poster(context,program_state,ray_code);
+            if (this.check_intersect_poster(intersect)) {
+                this.move_index = 6;
+                this.poster_view = true;
+            }
+        }
+
+        else if (this.mouse_scene.movem && this.poster_view) {
+            let vec2_view = this.mouse_scene.mouse.anchor;  
+            let ray_code = this.get_ray(context,program_state,vec2_view);
+            let intersect = this.intersection_ray_demonstrate(context,program_state,ray_code);
+            if (!this.check_intersect_demonstrate(intersect)) {
+                this.move_index = 0;
+                this.poster_view = false;
+            }
+        }
+
+    }
+
+    draw_poster (context,program_state) {
+        let transform = Mat4.identity();
+         transform = transform.times(Mat4.translation(0,1,20)).times(Mat4.scale(3,3,3));
+         this.shapes.passcode.draw(context,program_state,transform,this.materials.poster_texture);
+    }
+
 
 
 
@@ -1037,6 +1169,12 @@ export class Spring_Scene extends Scene {
          this.shapes.passcode.draw(context,program_state,transform,this.materials.passcode_texture);
      }
 
+     draw_congrat (context,program_state) {
+         let transform = Mat4.identity();
+         transform = transform.times(Mat4.translation(0,1,24)).times(Mat4.scale(5,5,5));
+         this.shapes.passcode.draw(context,program_state,transform,this.materials.congrat_texture);
+     }
+
 
     display(context, program_state) {
         // display():  Called once per frame of animation.
@@ -1192,8 +1330,28 @@ export class Spring_Scene extends Scene {
         }
         //this.shapes.half_circle3.draw(context, program_state, hook_transform1, this.materials.phong);
 
+        this.click_door(context,program_state);
+        if(this.passcode) {
+            this.move_index = 5;
+            this.draw_passcode(context,program_state);
+            this.push_password(context,program_state);
+        }
 
-        if(this.passcode) {this.draw_passcode(context,program_state);}
+        if (this.passcode_str == this.passcode_answer && this.passcode_finished) {
+            this.draw_congrat(context,program_state);
+        }
+        else if (this.passcode_finished){
+            this.passcode_str = "";
+            this.passcode_finished = false;
+        }
+
+        this.magnify_poster (context,program_state);
+        if (this.poster_view) {
+            this.draw_poster(context,program_state);
+        }
+
+        console.log(this.passcode_str)
+
 
     }
 }
