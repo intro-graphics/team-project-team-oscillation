@@ -565,7 +565,7 @@ export class Spring_Scene extends Scene {
 
         }
 
-        this.initial_camera_location = Mat4.look_at(vec3(0, 2, 30), vec3(0, -0.2, 0), vec3(0, 4, 0));
+        this.initial_camera_location = Mat4.look_at(vec3(0, 2, 30), vec3(0, -0.2, 0), vec3(0, 4, 0));//0030 0 -0.2 0
         //this.attached = () => this.initial_camera_location;
 
         this.cloth_transform = Mat4.identity();
@@ -633,6 +633,7 @@ export class Spring_Scene extends Scene {
 
 
         this.poster_view = false;
+        this.attach_poster = Mat4.identity();
 
 
 
@@ -744,7 +745,7 @@ export class Spring_Scene extends Scene {
             return;
         }
         let z_coord = 20;
-        let invView = program_state.camera_transform;
+        let invView = Mat4.inverse(Mat4.look_at(vec3(0, 2, 30), vec3(0, -0.2, 0), vec3(0, 4, 0)));//program_state.camera_transform;
         let camera_position = vec3(invView[0][3], invView[1][3], invView[2][3]);
         let t = (z_coord - camera_position[2])/(rayIn[2]);
         let x_zplane = camera_position[0] + t*rayIn[0];
@@ -754,7 +755,7 @@ export class Spring_Scene extends Scene {
 
     intersection_ray_poster (context,program_state,rayIn) {
         let x_coord = -15;
-        let invView = program_state.camera_transform;
+        let invView = Mat4.inverse(Mat4.look_at(vec3(0, 2, 30), vec3(0, -0.2, 0), vec3(0, 4, 0)));//program_state.camera_transform;
         let camera_position = vec3(invView[0][3], invView[1][3], invView[2][3]);
         let t = (x_coord - camera_position[0])/(rayIn[0]);
         let y_xplane = camera_position[1] + t*rayIn[1];
@@ -764,7 +765,7 @@ export class Spring_Scene extends Scene {
 
     intersection_ray_door (context,program_state,rayIn) {
         let x_coord = 15;
-        let invView = program_state.camera_transform;
+        let invView = Mat4.inverse(Mat4.look_at(vec3(0, 2, 30), vec3(0, -0.2, 0), vec3(0, 4, 0)));//program_state.camera_transform;
         let camera_position = vec3(invView[0][3], invView[1][3], invView[2][3]);
         let t = (x_coord - camera_position[0])/(rayIn[0]);
         let y_xplane = camera_position[1] + t*rayIn[1];
@@ -1347,7 +1348,12 @@ export class Spring_Scene extends Scene {
 
         this.magnify_poster (context,program_state);
         if (this.poster_view) {
-            this.draw_poster(context,program_state);
+          this.initial_camera_location = Mat4.translation(0,-3,1).times(Mat4.look_at(vec3(1,0,0),vec3(0,0,0),vec3(0, 4, 0)));
+            //this.draw_poster(context,program_state);
+        }
+        else
+        {
+            this.initial_camera_location= Mat4.look_at(vec3(0,2,30),vec3(0,-0.2,0),vec3(0, 4, 0));
         }
 
         console.log(this.passcode_str)
