@@ -626,16 +626,19 @@ export class Spring_Scene extends Scene {
         this.passcode = false;
         this.passcode_finished = false;
         this.passcode_str = "";
-        this.passcode_answer = ""; // need the correct passcode here
+        this.passcode_answer = "612395"; // need the correct passcode here
         this.passcode_x = [0, -2,0,2,-2,0,2,-2,0,2,-2,2];
         this.passcode_y = [-1.25, 0.25, 0.25,0.25,1.75,1.75,1.75,3.25,3.25,3.25,-1.25,-1.25];
         this.letters = ["0","1","2","3","4","5","6","7","8","9","*","#"];
 
 
         this.poster_view = false;
-        this.attach_poster = Mat4.identity();
-
-
+        //this.attach_poster = Mat4.identity();
+        this.end = new Audio("assets/juexing.mp3");
+        this.passcode_sound = new Audio("assets/passcode.mp3");
+        this.error_passcode = new Audio("assets/error.mp3");
+        this.correct_passcode = new Audio("assets/correct.mp3");
+        this.correct_play = true;
 
     }
 
@@ -817,6 +820,7 @@ export class Spring_Scene extends Scene {
                 intersect[0] <= this.passcode_x[i] + lambda &&
                 intersect[1] >= this.passcode_y[i] - lambda &&
                 intersect[1] <= this.passcode_y[i] + lambda) {
+                this.passcode_sound.play();
                     return i;
                 }
         }
@@ -1176,6 +1180,14 @@ export class Spring_Scene extends Scene {
          this.shapes.passcode.draw(context,program_state,transform,this.materials.congrat_texture);
      }
 
+     play_correct()
+     {
+         if(this.correct_play)
+         {
+             this.correct_passcode.play();
+             this.correct_play = false;
+         }
+     }
 
     display(context, program_state) {
         // display():  Called once per frame of animation.
@@ -1339,10 +1351,14 @@ export class Spring_Scene extends Scene {
         }
 
         if (this.passcode_str == this.passcode_answer && this.passcode_finished) {
+
+            this.play_correct();
             this.draw_congrat(context,program_state);
+            this.end.play();
         }
         else if (this.passcode_finished){
             this.passcode_str = "";
+            this.error_passcode.play();
             this.passcode_finished = false;
         }
 
