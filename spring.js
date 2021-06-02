@@ -906,7 +906,7 @@ export class Spring_Scene extends Scene {
             let vec2_view = this.mouse_scene.mouse.anchor;  
             let ray_code = this.get_ray(context,program_state,vec2_view);
             let intersect = this.intersection_ray_demonstrate(context,program_state,ray_code);
-            if (!this.check_intersect_demonstrate(intersect)) {
+            if (!this.check_intersect_poster(intersect)) {
                 this.move_index = 0;
                 this.poster_view = false;
             }
