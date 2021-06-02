@@ -604,14 +604,17 @@ export class Spring_Scene extends Scene {
         this.cur_loc_weight2 = undefined;
         this.cur_loc_weight3 = undefined;
 
+        this.mat_weight1 = Mat4.identity().pre_multiply(Mat4.scale(this.r1,this.r1,this.r1)).pre_multiply(Mat4.translation(-2,-4.3,1));
         this.mat_weight2 = Mat4.identity().pre_multiply(Mat4.scale(this.r1,this.r1,this.r1)).pre_multiply(Mat4.translation(-3,-4.3,1));
         this.mat_weight3 = Mat4.identity().pre_multiply(Mat4.scale(this.r1,this.r1,this.r1)).pre_multiply(Mat4.translation(-4,-4.3,1));
         this.mat_weight4 = Mat4.identity().pre_multiply(Mat4.scale(this.r1,this.r1,this.r1)).pre_multiply(Mat4.translation(-5,-4.3,1));
 
+        this.loc_weight1 = this.mat_weight1.times(vec4(0,0,0,1));
         this.loc_weight2 = this.mat_weight2.times(vec4(0,0,0,1));
         this.loc_weight3 = this.mat_weight3.times(vec4(0,0,0,1));
         this.loc_weight4 = this.mat_weight4.times(vec4(0,0,0,1));
 
+        this.hook1 = Mat4.identity().times(Mat4.translation(-2,-4,1)).times(Mat4.scale(1,1,1)).times(Mat4.rotation(Math.PI,1,0,0));
         this.hook2 = Mat4.identity().times(Mat4.translation(-3,-4,1)).times(Mat4.scale(1,1,1)).times(Mat4.rotation(Math.PI,1,0,0));
         this.hook3 = Mat4.identity().times(Mat4.translation(-4,-4,1)).times(Mat4.scale(1,1,1)).times(Mat4.rotation(Math.PI,1,0,0));
         this.hook4 = Mat4.identity().times(Mat4.translation(-5,-4,1)).times(Mat4.scale(1,1,1)).times(Mat4.rotation(Math.PI,1,0,0));
@@ -652,75 +655,13 @@ export class Spring_Scene extends Scene {
             this.key_triggered_button("Attach to spring", ["Control", "1"], () => this.attached = () => this.Spring);
             this.key_triggered_button("Attach to cloth", ["Control", "2"], () => this.attached = () => this.Cloth);
             this.new_line();
-            this.key_triggered_button("Wind", ["w"], () => {
-                this.open = true;
+            //this.key_triggered_button("Wind", ["w"], () => {
+                //this.open = true;
                 //this.close = false;
-            });
+            //});
             //this.key_triggered_button("password", ["p"], () => {
                 //this.passcode = !this.passcode;
             //});
-
-            this.key_triggered_button("w2", ["p"], () => {
-
-                if (this.weight1 || this.weight3 || this.weight4) {
-                    return;
-                }
-                else {
-                    if (!this.weight2) {
-                        this.move_index = 2;
-                        this.weight2 = true;
-                        this.mat_weight2 = this.mat_weight2.pre_multiply(Mat4.translation(2.9 - this.loc_weight2[0],12 - this.positionY,0));
-                        this.hook2 = this.hook2.pre_multiply(Mat4.translation(2.9 - this.loc_weight2[0],12 - this.positionY,0));
-                    }
-                    else {
-                        this.move_index = 0;
-                        this.weight2 = false;
-                        this.mat_weight2 = Mat4.identity().pre_multiply(Mat4.scale(this.r1,this.r1,this.r1)).pre_multiply(Mat4.translation(-3,-4.3,1));
-                        this.hook2 = Mat4.identity().times(Mat4.translation(-3,-4,1)).times(Mat4.scale(1,1,1)).times(Mat4.rotation(Math.PI,1,0,0));
-                    }
-                }
-
-            });
-            
-            this.key_triggered_button("w3",  ["y"],() => {
-                if (this.weight1 || this.weight2 || this.weight4) {
-                    return;
-                }
-                else {
-                    if (!this.weight3) {
-                        this.move_index = 3;
-                        this.weight3 = true;
-                        this.mat_weight3 = this.mat_weight3.pre_multiply(Mat4.translation(2.9 - this.loc_weight3[0],12 - this.positionY,0));
-                        this.hook3 = this.hook3.pre_multiply(Mat4.translation(2.9 - this.loc_weight3[0],12 - this.positionY,0));
-                    }
-                    else {
-                        this.move_index = 0;
-                        this.weight3 = false;
-                        this.mat_weight3 = Mat4.identity().pre_multiply(Mat4.scale(this.r1,this.r1,this.r1)).pre_multiply(Mat4.translation(-4,-4.3,1));
-                        this.hook3 = Mat4.identity().times(Mat4.translation(-4,-4,1)).times(Mat4.scale(1,1,1)).times(Mat4.rotation(Math.PI,1,0,0));
-                    }
-                }
-            });
-
-            this.key_triggered_button("w4",  ["g"],() => {
-                if (this.weight1 || this.weight2 || this.weight3) {
-                    return;
-                }
-                else {
-                    if (!this.weight4) {
-                        this.move_index = 4;
-                        this.weight4 = true;
-                        this.mat_weight4 = this.mat_weight3.pre_multiply(Mat4.translation(2.9 - this.loc_weight4[0],12 - this.positionY,0));
-                        this.hook4 = this.hook4.pre_multiply(Mat4.translation(2.9 - this.loc_weight4[0],12 - this.positionY,0));
-                    }
-                    else {
-                        this.move_index = 0;
-                        this.weight4 = false;
-                        this.mat_weight4 = Mat4.identity().pre_multiply(Mat4.scale(this.r1,this.r1,this.r1)).pre_multiply(Mat4.translation(-5,-4.3,1));
-                        this.hook4 = Mat4.identity().times(Mat4.translation(-5,-4,1)).times(Mat4.scale(1,1,1)).times(Mat4.rotation(Math.PI,1,0,0));
-                    }
-                }
-            });
 
 
         }
@@ -779,6 +720,16 @@ export class Spring_Scene extends Scene {
         return vec4(x_coord,y_xplane,z_xplane,1);
     }
 
+    intersection_ray_window (context,program_state,rayIn) {
+        let z_coord = -5.3;
+        let invView = program_state.camera_transform;
+        let camera_position = vec3(invView[0][3], invView[1][3], invView[2][3]);
+        let t = (z_coord - camera_position[2])/(rayIn[2]);
+        let x_zplane = camera_position[0] + t*rayIn[0];
+        let y_zplane = camera_position[1] + t*rayIn[1];
+        return vec4(x_zplane,y_zplane,z_coord,1);
+    }
+
 
 
     intersection_ray_demonstrate (context,program_state,rayIn) {
@@ -815,6 +766,47 @@ export class Spring_Scene extends Scene {
         
     } 
 
+     check_intersect_2(lambda, intersect_anchor) {
+        if (intersect_anchor[0] >= this.loc_weight2[0] - this.r1 - lambda && 
+            intersect_anchor[0] <= this.loc_weight2[0] + this.r1 + lambda &&
+            intersect_anchor[1] >= this.loc_weight2[1] - this.r1 - lambda && 
+            intersect_anchor[1] <= this.loc_weight2[1] + this.r1 + lambda) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        
+    } 
+
+     check_intersect_3(lambda, intersect_anchor) {
+        if (intersect_anchor[0] >= this.loc_weight3[0] - this.r1 - lambda && 
+            intersect_anchor[0] <= this.loc_weight3[0] + this.r1 + lambda &&
+            intersect_anchor[1] >= this.loc_weight3[1] - this.r1 - lambda && 
+            intersect_anchor[1] <= this.loc_weight3[1] + this.r1 + lambda) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        
+    } 
+
+      check_intersect_4(lambda, intersect_anchor) {
+        if (intersect_anchor[0] >= this.loc_weight4[0] - this.r1 - lambda && 
+            intersect_anchor[0] <= this.loc_weight4[0] + this.r1 + lambda &&
+            intersect_anchor[1] >= this.loc_weight4[1] - this.r1 - lambda && 
+            intersect_anchor[1] <= this.loc_weight4[1] + this.r1 + lambda) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        
+    } 
+
+
+
     check_intersect_passcode (intersect) {
         let lambda = 0.7;
         var i;
@@ -840,8 +832,8 @@ export class Spring_Scene extends Scene {
     }
 
     check_intersect_demonstrate (intersect) {
-        if (intersect[0] >= -3 && intersect[0] <= 3 &&
-            intersect[1] >= -2 && intersect[1] <= 4) {
+        if (intersect[0] >= -4 && intersect[0] <= 4 &&
+            intersect[1] >= -3 && intersect[1] <= 5) {
                 return true;
             }
         return false;
@@ -854,12 +846,21 @@ export class Spring_Scene extends Scene {
         return false;
     }
 
+    check_intersect_window (intersect) {
+        if (intersect[0] >= -11 && intersect[0] <= -1 &&
+            intersect[1] >= -1 && intersect[1] <= 9.3) {
+                return true;
+            }
+        return false;
+    }
+
     push_password(context,program_state) {
         if (this.passcode && this.mouse_scene.movem) {
             let vec2_view = this.mouse_scene.mouse.anchor;    
             let ray_code = this.get_ray(context,program_state,vec2_view);
             let intersect = this.intersection_ray_password(context,program_state,ray_code);
             let code_correspond = this.check_intersect_passcode(intersect);
+            console.log(code_correspond)
             if (code_correspond == undefined) {
                 return;
             }
@@ -870,12 +871,11 @@ export class Spring_Scene extends Scene {
                 return;
             }
             this.passcode_str += this.letters[code_correspond];
-            console.log(this.passcode_str)
         }
     }
 
     click_door (context,program_state) {
-        if (this.mouse_scene.movem && !this.passcode) {
+        if (this.mouse_scene.movem && !this.passcode && this.move_index == 0) {
             let vec2_view = this.mouse_scene.mouse.anchor;    
             let ray_code = this.get_ray(context,program_state,vec2_view);
             let intersect = this.intersection_ray_door(context,program_state,ray_code);
@@ -898,8 +898,19 @@ export class Spring_Scene extends Scene {
 
     }
 
+    click_window (context,program_state) {
+        if (this.mouse_scene.movem && !this.open) {
+            let vec2_view = this.mouse_scene.mouse.anchor;    
+            let ray_code = this.get_ray(context,program_state,vec2_view);
+            let intersect = this.intersection_ray_window(context,program_state,ray_code);
+            if (this.check_intersect_window(intersect)) {
+                this.open = true;
+            }
+        }
+    }
+
     magnify_poster (context,program_state) {
-        if (this.mouse_scene.movem && !this.poster_view) {
+        if (this.mouse_scene.movem && !this.poster_view && this.move_index == 0) {
             let vec2_view = this.mouse_scene.mouse.anchor;    
             let ray_code = this.get_ray(context,program_state,vec2_view);
             let intersect = this.intersection_ray_poster(context,program_state,ray_code);
@@ -927,79 +938,150 @@ export class Spring_Scene extends Scene {
          this.shapes.passcode.draw(context,program_state,transform,this.materials.poster_texture);
     }
 
-
-
-
-
-
-    drag_object1(context,program_state) {
-        let model_transform = Mat4.identity();
-        model_transform = model_transform.pre_multiply(Mat4.scale(this.r1,this.r1,this.r1)).pre_multiply(Mat4.translation(-2,-4.3,1));
-        let hook_transform1 = Mat4.identity();
-        hook_transform1 = hook_transform1.times(Mat4.translation(-2,-4,1)).times(Mat4.scale(1,1,1)).times(Mat4.rotation(Math.PI,1,0,0));
-        
-        if (this.mouse_scene.movem && (this.move_index == 0 || this.move_index == 1)) {
-                    this.update_anchor_1(context,program_state);
-                    let intersect_anchor = this.anchor1;
-                    let lambda = 0.02;
-                    if (intersect_anchor[0] >= this.loc_weight1[0] - this.r1 - lambda && 
-                        intersect_anchor[0] <= this.loc_weight1[0] + this.r1 + lambda &&
-                        intersect_anchor[1] >= this.loc_weight1[1] - this.r1 - lambda && 
-                        intersect_anchor[1] <= this.loc_weight1[1] + this.r1 + lambda) {
-                            this.move_index = 1;
-                            let ray_cur = this.get_ray(context,program_state,this.mouse_scene.mouse.from_center);
-                            let intersect_cur = this.intersection_ray_1(context,program_state,ray_cur);
-                            const x_diff = intersect_cur[0] - intersect_anchor[0];
-                            const y_diff = intersect_cur[1] - intersect_anchor[1];
-                            model_transform = model_transform.pre_multiply(Mat4.translation(x_diff,y_diff,0));
-                            hook_transform1 = hook_transform1.pre_multiply(Mat4.translation(x_diff,y_diff,0));
-
-                            this.cur_loc_weight1 = model_transform.times(vec4(0,0,0,1));
-                            this.shapes.cube.draw(context,program_state,model_transform,this.materials.weight1);
-                            this.shapes.half_circle3.draw(context, program_state, hook_transform1, this.materials.phong);
-
-                        }
-                      else {
-                          this.cur_loc_weight1 = undefined;
-                      }
+    drag_weight1 (context,program_state) {
+        if (this.mouse_scene.movem && this.move_index == 0 && !this.weight1) {
+            let vec2_view = this.mouse_scene.mouse.anchor; 
+            let ray_code = this.get_ray(context,program_state,vec2_view);
+            let intersect = this.intersection_ray_1(context,program_state,ray_code);
+            if (this.check_intersect_1(0.02,intersect)) {
+                this.move_index = 1;
+                this.anchor1 = intersect;
+            }
         }
-        else if (this.mouse_scene.freeze && (this.move_index == 0 || this.move_index == 1)) {
-            this.anchor1 = undefined;
+
+        else if (this.mouse_scene.movem && this.move_index == 1) {
             let lambda = 0.3;
             let y_spring = 12 - this.positionY + this.loc_weight1[1];
-            if (this.cur_loc_weight1 != undefined &&
-                this.cur_loc_weight1[1] >= y_spring - this.r1 - lambda && 
-                this.cur_loc_weight1[1] <= y_spring + this.r1 + lambda &&
-                this.cur_loc_weight1[0] >= 2.9 - this.r1 - lambda &&
-                this.cur_loc_weight1[0] <= 2.9 + this.r1 + lambda
-                ) 
-                {
-                    this.weight1 = true;
-                    let model_transform_w1 = Mat4.identity();
-                    model_transform_w1 = model_transform.pre_multiply(Mat4.translation(2.9 - this.loc_weight1[0],12 - this.positionY,0));
-                    this.shapes.cube.draw(context,program_state,model_transform_w1,this.materials.weight1);
-                    hook_transform1  =  hook_transform1.pre_multiply(Mat4.translation(2.9 - this.loc_weight1[0],12 - this.positionY,0));
-                    this.shapes.half_circle3.draw(context, program_state, hook_transform1, this.materials.phong);
+            if (this.anchor1 != undefined &&
+                this.anchor1[1] >= y_spring - this.r1 - lambda && 
+                this.anchor1[1] <= y_spring + this.r1 + lambda &&
+                this.anchor1[0] >= 2.9 - this.r1 - lambda &&
+                this.anchor1[0] <= 2.9 + this.r1 + lambda) {
+                    this.weight1 = false;
+                    this.anchor1 = undefined;
+                    this.move_index = 0;
 
                 }
-
-             else {
-                 this.move_index = 0;
-                 this.shapes.cube.draw(context,program_state,model_transform,this.materials.weight1);
-                 this.shapes.half_circle3.draw(context, program_state, hook_transform1, this.materials.phong);
-                 this.loc_weight1 = model_transform.times(vec(0,0,0,1));
-                 this.weight1 = false;
-             }
         }
 
-        else {
-            this.move_index = 0;
-            this.shapes.cube.draw(context,program_state,model_transform,this.materials.weight1);
-            this.shapes.half_circle3.draw(context, program_state, hook_transform1, this.materials.phong);
-            this.loc_weight1 = model_transform.times(vec(0,0,0,1));
-            this.weight1 = false;
+        if (this.mouse_scene.freeze && this.move_index == 1) {
+            let lambda = 0.3;
+            let y_spring = 12 - this.positionY + this.loc_weight1[1];
+            let ray_cur = this.get_ray(context,program_state,this.mouse_scene.mouse.from_center);
+            let intersect_cur = this.intersection_ray_1(context,program_state,ray_cur);
+            if (intersect_cur != undefined &&
+                intersect_cur[1] >= y_spring - this.r1 - lambda && 
+                intersect_cur[1] <= y_spring + this.r1 + lambda &&
+                intersect_cur[0] >= 2.9 - this.r1 - lambda &&
+                intersect_cur[0] <= 2.9 + this.r1 + lambda) {
+                    this.weight1 = true;
+                    this.anchor1 = intersect_cur;
+                }
+            else if (this.check_intersect_1 (0.02,this.anchor1)) {
+                this.weight1 = false;
+                this.move_index = 0;
+            }
+        }
+
+
+
+    }
+
+    click_weight2 (context,program_state) {
+        if (this.mouse_scene.movem && this.move_index == 0 && !this.weight2) {
+            let vec2_view = this.mouse_scene.mouse.anchor; 
+            let ray_code = this.get_ray(context,program_state,vec2_view);
+            let intersect = this.intersection_ray_1(context,program_state,ray_code);
+            if (this.check_intersect_2(0.02,intersect)) {
+                this.move_index = 2;
+                this.weight2 = true;
+            }
+        }
+
+         if (this.mouse_scene.movem && this.move_index == 2 && this.weight2) {
+            let vec2_view = this.mouse_scene.mouse.anchor; 
+            let ray_code = this.get_ray(context,program_state,vec2_view);
+            let intersect = this.intersection_ray_1(context,program_state,ray_code);
+            this.anchor1 = intersect;
+
+            let lambda = 0.3;
+            let y_spring = 12 - this.positionY + this.loc_weight1[1];
+            if (this.anchor1 != undefined &&
+                this.anchor1[1] >= y_spring - this.r1 - lambda && 
+                this.anchor1[1] <= y_spring + this.r1 + lambda &&
+                this.anchor1[0] >= 2.9 - this.r1 - lambda &&
+                this.anchor1[0] <= 2.9 + this.r1 + lambda) {
+                    this.weight2 = false;
+                    this.anchor1 = undefined;
+                    this.move_index = 0;
+                }
         }
     }
+
+    click_weight3(context,program_state) {
+        if (this.mouse_scene.movem && this.move_index == 0 && !this.weight3) {
+            let vec2_view = this.mouse_scene.mouse.anchor; 
+            let ray_code = this.get_ray(context,program_state,vec2_view);
+            let intersect = this.intersection_ray_1(context,program_state,ray_code);
+            if (this.check_intersect_3(0.02,intersect)) {
+                this.move_index = 3;
+                this.weight3 = true;
+            }
+        }
+
+         if (this.mouse_scene.movem && this.move_index == 3 && this.weight3) {
+            let vec2_view = this.mouse_scene.mouse.anchor; 
+            let ray_code = this.get_ray(context,program_state,vec2_view);
+            let intersect = this.intersection_ray_1(context,program_state,ray_code);
+            this.anchor1 = intersect;
+
+            let lambda = 0.3;
+            let y_spring = 12 - this.positionY + this.loc_weight1[1];
+            if (this.anchor1 != undefined &&
+                this.anchor1[1] >= y_spring - this.r1 - lambda && 
+                this.anchor1[1] <= y_spring + this.r1 + lambda &&
+                this.anchor1[0] >= 2.9 - this.r1 - lambda &&
+                this.anchor1[0] <= 2.9 + this.r1 + lambda) {
+                    this.weight3 = false;
+                    this.anchor1 = undefined;
+                    this.move_index = 0;
+                }
+        }        
+    }
+
+
+
+    click_weight4(context,program_state) {
+        if (this.mouse_scene.movem && this.move_index == 0 && !this.weight4) {
+            let vec2_view = this.mouse_scene.mouse.anchor; 
+            let ray_code = this.get_ray(context,program_state,vec2_view);
+            let intersect = this.intersection_ray_1(context,program_state,ray_code);
+            if (this.check_intersect_4(0.02,intersect)) {
+                this.move_index = 4;
+                this.weight4 = true;
+            }
+        }
+
+         if (this.mouse_scene.movem && this.move_index == 4 && this.weight4) {
+            let vec2_view = this.mouse_scene.mouse.anchor; 
+            let ray_code = this.get_ray(context,program_state,vec2_view);
+            let intersect = this.intersection_ray_1(context,program_state,ray_code);
+            this.anchor1 = intersect;
+
+            let lambda = 0.3;
+            let y_spring = 12 - this.positionY + this.loc_weight1[1];
+            if (this.anchor1 != undefined &&
+                this.anchor1[1] >= y_spring - this.r1 - lambda && 
+                this.anchor1[1] <= y_spring + this.r1 + lambda &&
+                this.anchor1[0] >= 2.9 - this.r1 - lambda &&
+                this.anchor1[0] <= 2.9 + this.r1 + lambda) {
+                    this.weight4 = false;
+                    this.anchor1 = undefined;
+                    this.move_index = 0;
+                }
+        }        
+    }
+
 
     draw_desk (context,program_state) {
         let plat_transform = Mat4.identity();
@@ -1109,41 +1191,7 @@ export class Spring_Scene extends Scene {
 
 
     }
-/*
-    draw_weight_1 (context,program_state,transform) {
-        let model_transform = Mat4.identity();
-        model_transform = transform.times(model_transform.pre_multiply(Mat4.scale(this.r1,this.r1,this.r1)).pre_multiply(Mat4.translation(-2,-4.3,1)));
-        this.loc_weight1 = (model_transform.times(vec4(0,0,0,1))).xyz; 
-        this.shapes.cube.draw(context,program_state,model_transform,this.materials.weight1);
-        //let strings = ["2kg",Text_Line.toString(), Text_Line.toString()];
-        //let cube_side = Mat4.translation(-0.3,0,1.1);
-        //this.shapes.text.set_string("2kg", context.context);
-        //this.shapes.text.draw(context, program_state, model_transform.times(cube_side).times(Mat4.scale(.15, .15, .15)), this.text_image);
-    }
 
-    draw_weight_2 (context,program_state) {
-        let model_transform = Mat4.identity();
-        model_transform = model_transform.pre_multiply(Mat4.scale(this.r2,this.r2,this.r2)).pre_multiply(Mat4.translation(-4,-4.1,1));
-        this.loc_weight2 = (model_transform.times(vec4(0,0,0,1))).xyz; 
-        this.shapes.cube.draw(context,program_state,model_transform,this.materials.weight1);
-        //let strings = ["1.5kg",Text_Line.toString(), Text_Line.toString()];
-        let cube_side = Mat4.translation(-0.5,0,1.1);
-        this.shapes.text.set_string("2.5kg", context.context);
-        this.shapes.text.draw(context, program_state, model_transform.times(cube_side).times(Mat4.scale(.2, .2, .2)), this.text_image);
-    }
-
-    draw_weight_3 (context,program_state) {
-        let model_transform = Mat4.identity();
-        model_transform = model_transform.pre_multiply(Mat4.scale(this.r3,this.r3,this.r3)).pre_multiply(Mat4.translation(-5.6,-4.4,1));
-        this.shapes.cube.draw(context,program_state,model_transform,this.materials.weight1);
-        this.loc_weight3 = (model_transform.times(vec4(0,0,0,1))).xyz; 
-        //let strings = ["1.5kg",Text_Line.toString(), Text_Line.toString()];
-        let cube_side = Mat4.translation(-0.28,0,1.1);
-        this.shapes.text.set_string("1kg", context.context);
-        this.shapes.text.draw(context, program_state, model_transform.times(cube_side).times(Mat4.scale(.3, .3, .3)), this.text_image);
-    }
-
-    */
 
     draw_wall (context,program_state) {
         let back = Mat4.identity();
@@ -1241,6 +1289,94 @@ export class Spring_Scene extends Scene {
         this.Spring = Mat4.translation(30,12, -130);
         this.Cloth = Mat4.identity().times(Mat4.translation(-9.9,7.7,-4.8)).times(Mat4.scale(0.57,0.6,1)).times(Mat4.translation(-40,35, -140));
 
+
+        this.click_window(context,program_state);
+        this.drag_weight1(context,program_state);
+        this.click_weight2(context,program_state);
+        this.click_weight3(context,program_state);
+        this.click_weight4(context,program_state);
+        
+        if (this.mouse_scene.movem && this.move_index == 1) {
+            let ray_cur = this.get_ray(context,program_state,this.mouse_scene.mouse.from_center);
+            let intersect_cur = this.intersection_ray_1(context,program_state,ray_cur);
+            let x_diff = intersect_cur[0] - this.anchor1[0];
+            let y_diff = intersect_cur[1] - this.anchor1[1];
+            this.mat_weight1 = Mat4.identity().pre_multiply(Mat4.scale(this.r1,this.r1,this.r1)).pre_multiply(Mat4.translation(-2,-4.3,1));
+            this.mat_weight1 = this.mat_weight1.pre_multiply(Mat4.translation(x_diff,y_diff,0));
+            this.hook1 = Mat4.identity().times(Mat4.translation(-2,-4,1)).times(Mat4.scale(1,1,1)).times(Mat4.rotation(Math.PI,1,0,0));
+            this.hook1 = this.hook1.pre_multiply(Mat4.translation(x_diff,y_diff,0));
+        }
+
+        else if (this.mouse_scene.freeze && !this.weight1 && this.move_index == 1) {
+            this.mat_weight1 = Mat4.identity().pre_multiply(Mat4.scale(this.r1,this.r1,this.r1)).pre_multiply(Mat4.translation(-2,-4.3,1));
+            this.hook1 = Mat4.identity().times(Mat4.translation(-2,-4,1)).times(Mat4.scale(1,1,1)).times(Mat4.rotation(Math.PI,1,0,0));
+        }
+        else if (this.mouse_scene.freeze && this.weight1 && this.move_index == 1) {
+            this.mat_weight1 = Mat4.identity().pre_multiply(Mat4.scale(this.r1,this.r1,this.r1)).pre_multiply(Mat4.translation(-2,-4.3,1));            
+            this.mat_weight1 = this.mat_weight1.pre_multiply(Mat4.translation(1.9 - this.loc_weight2[0],12 - this.positionY,0));
+            this.hook1 = Mat4.identity().times(Mat4.translation(-2,-4,1)).times(Mat4.scale(1,1,1)).times(Mat4.rotation(Math.PI,1,0,0));            
+            this.hook1 = this.hook1.pre_multiply(Mat4.translation(1.9 - this.loc_weight2[0],12 - this.positionY,0));
+        }
+
+        else {
+            this.mat_weight1 = Mat4.identity().pre_multiply(Mat4.scale(this.r1,this.r1,this.r1)).pre_multiply(Mat4.translation(-2,-4.3,1));  
+            this.hook1 = Mat4.identity().times(Mat4.translation(-2,-4,1)).times(Mat4.scale(1,1,1)).times(Mat4.rotation(Math.PI,1,0,0));                        
+        }
+
+
+
+        if (this.weight2) {
+            this.mat_weight2 = Mat4.identity().pre_multiply(Mat4.scale(this.r1,this.r1,this.r1)).pre_multiply(Mat4.translation(-2,-4.3,1));
+            this.mat_weight2 = this.mat_weight2.pre_multiply(Mat4.translation(1.9 - this.loc_weight2[0],12 - this.positionY,0));
+            this.hook2 = Mat4.identity().times(Mat4.translation(-2,-4,1)).times(Mat4.scale(1,1,1)).times(Mat4.rotation(Math.PI,1,0,0));            
+            this.hook2 = this.hook2.pre_multiply(Mat4.translation(1.9 - this.loc_weight2[0],12 - this.positionY,0));
+        }
+        else if (!this.weight2) {
+            this.mat_weight2 = Mat4.identity().pre_multiply(Mat4.scale(this.r1,this.r1,this.r1)).pre_multiply(Mat4.translation(-3,-4.3,1));
+            this.hook2 = Mat4.identity().times(Mat4.translation(-3,-4,1)).times(Mat4.scale(1,1,1)).times(Mat4.rotation(Math.PI,1,0,0));  
+        }
+
+
+        if (this.weight3) {
+            this.mat_weight3 = Mat4.identity().pre_multiply(Mat4.scale(this.r1,this.r1,this.r1)).pre_multiply(Mat4.translation(-2,-4.3,1));
+            this.mat_weight3 = this.mat_weight3.pre_multiply(Mat4.translation(1.9 - this.loc_weight2[0],12 - this.positionY,0));
+            this.hook3 = Mat4.identity().times(Mat4.translation(-2,-4,1)).times(Mat4.scale(1,1,1)).times(Mat4.rotation(Math.PI,1,0,0));            
+            this.hook3 = this.hook3.pre_multiply(Mat4.translation(1.9 - this.loc_weight2[0],12 - this.positionY,0));
+        }
+        else if (!this.weight3) {
+            this.mat_weight3 = Mat4.identity().pre_multiply(Mat4.scale(this.r1,this.r1,this.r1)).pre_multiply(Mat4.translation(-4,-4.3,1));
+            this.hook3 = Mat4.identity().times(Mat4.translation(-4,-4,1)).times(Mat4.scale(1,1,1)).times(Mat4.rotation(Math.PI,1,0,0));  
+        }
+
+        if (this.weight4) {
+            this.mat_weight4 = Mat4.identity().pre_multiply(Mat4.scale(this.r1,this.r1,this.r1)).pre_multiply(Mat4.translation(-2,-4.3,1));
+            this.mat_weight4 = this.mat_weight4.pre_multiply(Mat4.translation(1.9 - this.loc_weight2[0],12 - this.positionY,0));
+            this.hook4 = Mat4.identity().times(Mat4.translation(-2,-4,1)).times(Mat4.scale(1,1,1)).times(Mat4.rotation(Math.PI,1,0,0));            
+            this.hook4 = this.hook4.pre_multiply(Mat4.translation(1.9 - this.loc_weight2[0],12 - this.positionY,0));
+        }
+        else if (!this.weight4) {
+            this.mat_weight4 = Mat4.identity().pre_multiply(Mat4.scale(this.r1,this.r1,this.r1)).pre_multiply(Mat4.translation(-5,-4.3,1));
+            this.hook4 = Mat4.identity().times(Mat4.translation(-5,-4,1)).times(Mat4.scale(1,1,1)).times(Mat4.rotation(Math.PI,1,0,0));  
+        }
+
+
+
+
+
+
+        this.shapes.cube.draw(context,program_state,this.mat_weight1,this.materials.weight1);
+        this.shapes.half_circle3.draw(context, program_state, this.hook1, this.materials.phong);
+
+        this.shapes.cube.draw(context,program_state,this.mat_weight2,this.materials.weight2);
+        this.shapes.half_circle3.draw(context, program_state, this.hook2, this.materials.phong);
+
+        this.shapes.cube.draw(context,program_state,this.mat_weight3,this.materials.weight3);
+        this.shapes.half_circle3.draw(context, program_state, this.hook3, this.materials.phong);
+
+        this.shapes.cube.draw(context,program_state,this.mat_weight4,this.materials.weight4);
+        this.shapes.half_circle3.draw(context, program_state, this.hook4, this.materials.phong);
+
+
         if(!this.weight1 && !this.weight2 && !this.weight3 && !this.weight4)
         {
             this.mass = 0.84;
@@ -1274,29 +1410,6 @@ export class Spring_Scene extends Scene {
         this.draw_desk(context,program_state);
         this.draw_clock(context,program_state);
         this.draw_platform(context,program_state);
-
-
-        if (!this.weight2 && !this.weight3 && !this.weight4 && (this.move_index == 1 || this.move_index == 0 )) {
-            this.drag_object1(context,program_state);
-        }
-        else if (!this.weight1) {
-            let model_transform = Mat4.identity();
-            model_transform = model_transform.pre_multiply(Mat4.scale(this.r1,this.r1,this.r1)).pre_multiply(Mat4.translation(-2,-4.3,1));
-            this.shapes.cube.draw(context,program_state,model_transform,this.materials.weight1);
-            this.shapes.half_circle3.draw(context, program_state, hook_transform1, this.materials.phong);
-            this.loc_weight1 = model_transform.times(vec(0,0,0,1));
-            this.weight1 = false;
-        }
-
-
-
-        //this.shapes.cube.draw(context,program_state,this.mat_weight2,this.materials.weight2);
-        this.shapes.cube.draw(context,program_state,this.mat_weight3,this.materials.weight3);
-        this.shapes.cube.draw(context,program_state,this.mat_weight4,this.materials.weight4);
-        //this.shapes.half_circle3.draw(context, program_state, this.hook2, this.materials.phong);
-        this.shapes.half_circle3.draw(context, program_state, this.hook3, this.materials.phong);
-        this.shapes.half_circle3.draw(context, program_state, this.hook4, this.materials.phong);
-
         this.draw_wall(context,program_state);
 
         //this.shapes.spring.func(this.d);
@@ -1335,20 +1448,7 @@ export class Spring_Scene extends Scene {
         this.shapes.half_circle2.draw(context, program_state, half_circle_transform3, this.materials.phong);
 
 
-        if (!this.weight2) {
-            this.shapes.cube.draw(context,program_state,this.mat_weight2,this.materials.weight2);
-            this.shapes.half_circle3.draw(context, program_state, this.hook2, this.materials.phong);
-        }
-        else {
-            this.mat_weight2 = Mat4.identity().pre_multiply(Mat4.scale(this.r1,this.r1,this.r1)).pre_multiply(Mat4.translation(-3,-4.3,1));
-            this.mat_weight2 = this.mat_weight2.pre_multiply(Mat4.translation(2.9 - this.loc_weight2[0],12 - this.positionY,0));
-            //this.hook2 = Mat4.identity().times(Mat4.translation(-3,-4,1)).times(Mat4.scale(1,1,1)).times(Mat4.rotation(Math.PI,1,0,0));
-            //this.hook2 = this.hook2.pre_multiply(Mat4.translation(2.9 - this.loc_weight2[0],12 - this.positionY,0));
-            this.hook2 = Mat4.identity().times(Mat4.rotation(Math.PI,1,0,0));
-            this.hook2 = this.hook2.pre_multiply(Mat4.translation(2.9,8 - this.positionY,1))
-            //this.shapes.cube.draw(context,program_state,this.mat_weight2,this.materials.weight2);
-            this.shapes.half_circle3.draw(context, program_state, this.hook2, this.materials.phong);
-        }
+        
         //this.shapes.half_circle3.draw(context, program_state, hook_transform1, this.materials.phong);
 
         this.click_door(context,program_state);
@@ -1379,8 +1479,6 @@ export class Spring_Scene extends Scene {
         {
             this.initial_camera_location= Mat4.look_at(vec3(0,2,30),vec3(0,-0.2,0),vec3(0, 4, 0));
         }
-
-        console.log(this.passcode_str)
 
 
     }
