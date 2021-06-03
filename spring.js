@@ -860,7 +860,7 @@ export class Spring_Scene extends Scene {
             let ray_code = this.get_ray(context,program_state,vec2_view);
             let intersect = this.intersection_ray_password(context,program_state,ray_code);
             let code_correspond = this.check_intersect_passcode(intersect);
-            console.log(code_correspond)
+            //console.log(code_correspond)
             if (code_correspond == undefined) {
                 return;
             }
@@ -870,7 +870,13 @@ export class Spring_Scene extends Scene {
                 this.move_index = 0;
                 return;
             }
-            this.passcode_str += this.letters[code_correspond];
+            if(code_correspond == 10)
+            {
+                this.passcode_str = "";
+            }
+            else{
+            this.passcode_str += this.letters[code_correspond];}
+            console.log(this.passcode_str);
         }
     }
 
@@ -1233,7 +1239,7 @@ export class Spring_Scene extends Scene {
          this.shapes.passcode.draw(context,program_state,transform,this.materials.congrat_texture);
          this.shapes.passcode.draw(context,program_state,transform_cube,this.materials.phong.override({color:color(Math.random(),Math.random(),Math.random(),0.5)}));
          this.i = this.i+1;
-         console.log(dt);
+         //console.log(dt);
      }
 
      play_correct()
