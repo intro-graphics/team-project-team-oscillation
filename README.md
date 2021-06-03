@@ -16,7 +16,11 @@ In our project, we built a simple escape room. Users need to find the correct pa
 
 1. Mouse picking （Sian Wen）
 
+To enable mouse picking, we first cast a ray in the world space from the camera position to the corresponding world coordinate of the mouse location. Then, we calculate the intersection between the array and the front surface of an object of interest. In the world space, we would check whether the intersection is within the object or not. 
+
 (i) Drag object
+
+In this project, we allow the user to drag the blue weight and attach it to the spring. Once we check that the user has clicked the blue weight, we would 
 
 
 <img src="/report/drag.gif" width="327" height="302"/>  
@@ -29,9 +33,7 @@ Besides mouse dragging, we also enbale interactions via mouse clicking. For the 
 Once the user clicks the poster, he/she will have a better view of the poster. When the user clicks the screen again, the perspective would be set to the normal case. This is achieved by changing the look_at matrix. 
 <img src="/report/poster_in.gif" width="488" height="300"/> 
 
-Similarly, when the user clicks the window, the curtain will be blown up. When the user clicks the door, the passcode will be popped up. If the user then clicks any where except the passcode area, the passcode area will then be gone.
-
-The user would input the passcode by clicking the numbers on the passcode area, and one shall end the passcode by clicking "#." 
+Similarly, when the user clicks the window, the curtain will be blown up. When the user clicks the door, the passcode will be popped up. If the user then clicks any where except the passcode area, the passcode area will then be gone. The user would input the passcode by clicking the numbers on the passcode area, and one shall end the passcode by clicking "#." 
 <img src="/report/passcode_cl.gif" width="488" height="300"/> 
 
 
