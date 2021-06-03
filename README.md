@@ -17,7 +17,7 @@ In our project, we built a simple escape room. Users need to find the correct pa
 1. Mouse picking （Sian Wen）
 
 (i) Drag object
-<img src="/report/drag.gif" width="300" height="552"/>   
+<img src="/report/drag.gif" width="400" height="279"/>   
 
 
 2. Physics based simulation  (Yunpu Liu) 
