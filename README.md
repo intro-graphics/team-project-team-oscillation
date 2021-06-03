@@ -16,12 +16,11 @@ In our project, we built a simple escape room. Users need to find the correct pa
 
 1. Mouse picking （Sian Wen）
 
-To enable mouse picking, we first cast a ray in the world space from the camera position to the corresponding world coordinate of the mouse location. Then, we calculate the intersection between the array and the front surface of an object of interest. In the world space, we would check whether the intersection is within the object or not. 
+To enable mouse picking, we first cast a ray in the world space from the camera position to the corresponding world coordinate of the mouse location. Then, we calculate the intersection between the ray and the plane that contains the front surface of an object of interest. In the world space, we would check whether the intersection is within the object or not. 
 
 (i) Drag object
 
-In this project, we allow the user to drag the blue weight and attach it to the spring. Once we check that the user has clicked the blue weight, we would 
-
+In this project, we allow the user to drag the blue weight and attach it to the spring. Once we check that the user has clicked the blue weight, we would update the location of the weight by tracking the intersection between the ray that passes through the camera and the world coordinate of the mouse location and the plane that contains the front surface of the blue weight. Once the user releases the mouse, if the weight is near the end of the spring, the weight will then be attached to the spring, or it will return back to its original location.
 
 <img src="/report/drag.gif" width="327" height="302"/>  
 (ii) Click object
