@@ -333,23 +333,6 @@ const Surface_Of_Revolution_2 = defs.Surface_Of_Revolution_2 =
             super(rows, columns, row_operation, column_operation, texture_coord_range);
         }
     }
-/*const Surface_Of_Revolution_3 = defs.Surface_Of_Revolution_3 =
-    class Surface_Of_Revolution_3 extends Grid_Patch {
-
-        constructor(rows, columns, points, texture_coord_range, total_curvature_angle = Math.PI) {
-
-            const row_operation1 = i => Grid_Patch.sample_array(points, i),
-                column_operation1 = (j, p) => Mat4.rotation(total_curvature_angle / (2/3)*columns, 0, 0, 1).times(p.to4(1)).to3();
-            const row_operation2 = i => Grid_Patch.sample_array(points, i),
-                column_operation2 = (j, p) => Mat4.translation( 0, 2/(1/3)*columns, 0).times(p.to4(1)).to3();
-
-            super(rows, (2/3)*columns, row_operation1, column_operation1, texture_coord_range);
-            super(rows, (1/3)*columns, row_operation2, column_operation2, texture_coord_range);
-
-        }
-    }*/
-
-
 
 
 const Regular_2D_Polygon = defs.Regular_2D_Polygon =

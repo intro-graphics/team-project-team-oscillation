@@ -7,15 +7,8 @@ const {
 const {Textured_Phong} = defs
 
 const k = 0.3;
-//let positionY = 7.7777;
 const anchorY = 5;
-//let mass = 1.38;//0.84,1,1.15,1.27,1.38
 const gravity = 1;
-//let velocityY = 0;
-//let springForceY = 0;
-//let forceY = 0;
-//let accelerationY = 0;
-//let d = 1/100;
 const DAMPING=0.01;
 const DAMPING2 = 0.2;
 const TIME_STEPSIZE2 = 0.5*0.5;
@@ -33,7 +26,6 @@ class particle
         this.movable=true;
         this.accumulated_normal=vec3(0,0,0);
         this.ymovable = true;
-        //console.log(typeof (this.pos));
     }
 
     addForce(f)
@@ -146,28 +138,6 @@ class cloth extends Shape {
             this.getParticle(num_particles_width- 1 - i, 0).makeUnmovable();
         }
 
-        /*for (let i = 0 ;i < num_particles_width;i=i+6)
-        {
-
-            if(i===0)
-            {
-                for(let j=i;j<i+2;j++)
-                {
-                    this.getParticle(0 + j, 0).offsetPos(vec3(-0.15, 0.0, 0.0));
-                    this.getParticle(0 + j, 0).makeUnmovable();
-                }
-            }
-            else
-            {
-                for(let j=i;j<i+2;j++)
-                {
-                    this.getParticle(0 + j, 0).offsetPos(vec3(-0.15*(1+(i/6)), 0.0, 0.0));
-                    this.getParticle(0 + j, 0).makeUnmovable();
-                }
-            }
-
-
-        }*/
 
 
         for (let particle of this.particles) {
@@ -223,7 +193,6 @@ class cloth extends Shape {
     let pos1 = p1.getPos();
     let pos2 = p2.getPos();
     let pos3 = p3.getPos();
-       //console.log(pos1);
     let v1 = pos2.minus(pos1);
     let v2 = pos3.minus(pos1);
 
@@ -273,32 +242,8 @@ class cloth extends Shape {
     }
    }
 
-   collision()
-   {
-       for(let p of this.particles)
-       {
-           if(p.getPos().z()<-4)
-           {
-               /*let d = (p.getPos().minus(p.old_pos)).normalized();
-               //p.getPos().z()+d.times(-1).times(x).z() = -5
-               let x = (-5-p.getPos().z())/d.times(-1).z();
 
-               let n = vec3(0,0,1);
-               let reflection = d.minus(n.times((d.dot(n))*2));
-               p.offsetPos(reflection.normalized().times(x));
-               console.log(p.getPos().z());*/
 
-               //console.log(reflection);
-               //p.offsetPos(vec(0,0,2));
-               //console.log(p.getPos().z());
-               //console.log(p.acceleration);
-               //p.acceleration[2] = p.acceleration[2]+400*p.acceleration[2];
-               //p.addForce(vec3(0,0,25));
-
-           }
-       }
-
-   }
     open()
     {
         for (let i = 0 ;i < this.num_particles_width; i=i+6)
@@ -1454,8 +1399,6 @@ export class Spring_Scene extends Scene {
         this.shapes.half_circle2.draw(context, program_state, half_circle_transform3, this.materials.phong);
 
 
-        
-        //this.shapes.half_circle3.draw(context, program_state, hook_transform1, this.materials.phong);
 
         this.click_door(context,program_state);
         if(this.passcode) {
@@ -1479,7 +1422,6 @@ export class Spring_Scene extends Scene {
         this.magnify_poster (context,program_state);
         if (this.poster_view) {
           this.initial_camera_location = Mat4.translation(0,-3,1).times(Mat4.look_at(vec3(1,0,0),vec3(0,0,0),vec3(0, 4, 0)));
-            //this.draw_poster(context,program_state);
         }
         else
         {
