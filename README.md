@@ -19,11 +19,12 @@ In our project, we built a simple escape room. Users need to find the correct pa
 (i) Drag object
 
 
-<img src="/report/drag.gif" width="488" height="300"/>  
+<img src="/report/drag.gif" width="450" height="300"/>  
 (ii) Click object
 
 Besides mouse dragging, we also enbale interactions via mouse clicking. For the 3 other weights, a user could attach and deattach the weight by clicking it.
-<img src="/report/click_weight.gif" width="488" height="300"/> 
+
+<img src="/report/click_weight.gif" width="450" height="300"/> 
 
 Once the user clicks the poster, he/she will have a better view of the poster. When the user clicks the screen again, the perspective would be set to the normal case. This is achieved by changing the look_at matrix. 
 <img src="/report/poster_in.gif" width="488" height="300"/> 
