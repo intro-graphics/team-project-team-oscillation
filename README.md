@@ -69,6 +69,9 @@ Then we add the damping term, the equation becomes
 https://viscomp.alexandra.dk/?p=147    
 https://www.scss.tcd.ie/~manzkem/CS7057/cs7057-1516-14-MassSpringSystems-mm.pdf  
 
+### Music
+ツナ覚醒 composed by Toshihiko Sahashi
+
 
 
 
