@@ -12,7 +12,7 @@ In our project, we built a simple escape room. Users need to find the correct pa
 <img src="/report/password.png" width="600" height="334"/>     
 <img src="/report/congratulations.gif" width="600" height="334"/>  
 
-### Advance features
+### Advanced features
 
 1. Mouse picking （Sian Wen）
 
