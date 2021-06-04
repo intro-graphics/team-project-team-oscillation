@@ -55,7 +55,7 @@ Consider the Tayler expansion
 ![equation](https://latex.codecogs.com/gif.latex?x%28t&plus;h%29%20%3D%20x%28t%29&plus;%20x%27%28t%29h%20&plus;%20%5Cfrac%7B1%7D%7B2%7Dx%27%27%28t%29h%5E2&plus;%5Cfrac%7B1%7D%7B6%7Dx%27%27%27%28t%29h%5E3&plus;O%28h%5E4%29%5C%5C)    
 ![equation](https://latex.codecogs.com/gif.latex?x%28t-h%29%20%3D%20x%28t%29-%20x%27%28t%29h%20&plus;%20%5Cfrac%7B1%7D%7B2%7Dx%27%27%28t%29h%5E2-%5Cfrac%7B1%7D%7B6%7Dx%27%27%27%28t%29h%5E3&plus;O%28h%5E4%29)   
 Add these two together, we have    
-![equation](https://latex.codecogs.com/gif.latex?x%28t&plus;h%29%20%3D%202x%28t%29-x%28t-h%29&plus;t%5E2x%27%27%28t%29&plus;O%28h%5E4%29)   
+![equation](https://latex.codecogs.com/gif.latex?x%28t&plus;h%29%20%3D%202x%28t%29-x%28t-h%29&plus;h%5E2x%27%27%28t%29&plus;O%28h%5E4%29)   
 Thus we can calculate x(i+1) using   
 ![equation](https://latex.codecogs.com/gif.latex?x%28i&plus;1%29%20%3D%202x%28i%29-x%28i-1%29&plus;h%5E2a%28i%29)    
 Then we add the damping term, the equation becomes    
